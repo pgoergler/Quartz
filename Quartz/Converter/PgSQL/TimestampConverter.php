@@ -1,6 +1,6 @@
 <?php
 
-namespace Quartz\Converter\MySQL;
+namespace Quartz\Converter\PgSQL;
 
 /**
  * Description of TimestampConverter
@@ -15,6 +15,10 @@ class TimestampConverter implements \Quartz\Converter\ConverterInterface
         if( $data == 'NULL' )
         {
             return null;
+        }
+        if( !is_null($type) )
+        {
+            return new \DateTime(preg_replace('#^timestamp \'(.*?)\'$#', '$1', $data));
         }
         return new \DateTime($data);
     }
@@ -37,7 +41,7 @@ class TimestampConverter implements \Quartz\Converter\ConverterInterface
             }
         }
 
-        return sprintf("'%s'", $data->format('Y-m-d H:i:s.u'));
+        return sprintf("%s '%s'", 'timestamp', $data->format('Y-m-d H:i:s.u'));
     }
 
 }
