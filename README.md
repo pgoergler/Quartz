@@ -1,4 +1,4 @@
 Quartz
 ======
 
-Simple ORM
+Simple ORM.
