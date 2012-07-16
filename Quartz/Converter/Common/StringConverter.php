@@ -30,6 +30,7 @@ class StringConverter implements \Quartz\Converter\ConverterInterface
         }
         //return "'" . str_replace('\\"', '"', $data) . "'";
         $data = str_replace("'", "''", $data);
+        $data = str_replace('\\', '\\\\', $data);
         return sprintf("'%s'",  $data);
     }
 
