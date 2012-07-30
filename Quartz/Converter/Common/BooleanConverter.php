@@ -12,20 +12,26 @@ class BooleanConverter implements \Quartz\Converter\ConverterInterface
 
     public function fromDb($data, $type = null)
     {
-        if( $data == 'NULL' )
+        if ($data === 'NULL' || $data === 'null' || $data === null)
         {
             return null;
         }
-        return is_int($data)?($data?true:false):in_array($data, array('t', 'T', 'true', 'TRUE', 'yes', 'YES', 1, 'on', 'ON'));
+        return is_int($data) ? ($data ? true : false) : in_array($data, array('t', 'T', 'true', 'TRUE', 'yes', 'YES', 1, 'on', 'ON'));
     }
 
     public function toDb($data, $type = null)
     {
-        if( is_null($data) )
+        if (is_null($data))
         {
             return 'NULL';
         }
-        return $data ? "true" : "false";
+        if (is_int($data))
+        {
+            return $data ? 'true' : 'false';
+        } else
+        {
+            return in_array($data, array('t', 'T', 'true', 'TRUE', 'yes', 'YES', 1, 'on', 'ON')) ? 'true' : 'false';
+        }
     }
 
 }

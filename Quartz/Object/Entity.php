@@ -238,16 +238,17 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         if (is_null($object))
         {
+            $this->setObjectRelation($relation, $object, true);
             return $this;
         }
 
         if ($this->getTable()->hasOneRelation($relation))
         {
-            if (!isset($this->objectsLinked[$relation]))
+            if (!isset($this->objectsPreSave[$relation]))
             {
                 $this->objectsPreSave[$relation] = array();
             }
-
+            
             $config = $this->getTable()->getOneRelation($relation);
             $class = $config['class'];
             if (!$object instanceof $class)
@@ -255,8 +256,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                 throw new \RuntimeException('In ' . $this->getTable()->getName() . ' manyRelation ' . $relation . ' must be set with ' . $class . ' and not with ' . get_class($object));
             }
 
-            $this->objectsPreSave[$relation][] = $object;
-            $this->setObjectRelation($relation, $object);
+            $this->objectsPreSave[$relation][0] = $object;
+            $this->setObjectRelation($relation, $object, true);
         }
         return $this;
     }
@@ -274,12 +275,13 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         if (is_null($objects))
         {
+            $this->setObjectRelation($relation, $object, false);
             return $this;
         }
 
         if ($this->getTable()->hasManyRelation($relation))
         {
-            if (!isset($this->objectsLinked[$relation]))
+            if (!isset($this->objectsPostSave[$relation]))
             {
                 $this->objectsPostSave[$relation] = array();
             }
@@ -299,7 +301,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                 }
 
                 $this->objectsPostSave[$relation][] = $object;
-                $this->setObjectRelation($relation, $object);
+                $this->setObjectRelation($relation, $object, false);
             }
         }
         return $this;
@@ -316,14 +318,14 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         if ($this->getTable()->hasOneRelation($relation))
         {
-            if (!isset($this->objectsLinked[$relation]) || is_null($this->objectsLinked[$relation]))
+            if (!array_key_exists($relation, $this->objectsLinked))// || is_null($this->objectsLinked[$relation]))
             {
                 $this->objectsLinked[$relation] = $this->findRelation($relation, true);
             }
             return $this->objectsLinked[$relation];
         } else if ($this->getTable()->hasManyRelation($relation))
         {
-            if (!isset($this->objectsLinked[$relation]))
+            if (!array_key_exists($relation, $this->objectsLinked))
             {
                 $res = $this->findRelation($relation, false);
                 $this->objectsLinked[$relation] = $res ? $res : array();
@@ -369,7 +371,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
                         if ($function == 'get')
                         {
-                            return $this->getRelation($property, true);
+                            return $this->getRelation($property);
                         } else
                         {
                             $this->setOneRelation($property, $args[0]);
@@ -380,7 +382,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                         //Logger::getRootLogger()->trace($this->className . ' has many relation with ' . $property);
                         if ($function == 'get')
                         {
-                            return $this->getRelation($property, false);
+                            return $this->getRelation($property);
                             //return $this->getTable()->findHasSingleRelation($property, $this, false);
                         } else
                         {
@@ -479,11 +481,6 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      */
     protected function setForeignKey($relation, Entity &$object = null)
     {
-        if (is_null($object))
-        {
-            return $this;
-        }
-
         if ($this->getTable()->hasOneRelation($relation))
         {
             $config = $this->getTable()->getOneRelation($relation);
@@ -491,7 +488,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $local = $config['local'];
             $foreign = $config['foreign'];
             $class = $config['class'];
-            $this->set($local, $object->get($foreign));
+            $value = is_null($object)?null:$object->get($foreign);
+            $this->set($local, $value);
         } else if ($this->getTable()->hasManyRelation($relation))
         {
             $config = $this->getTable()->getManyRelation($relation);
@@ -499,7 +497,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $local = $config['local'];
             $foreign = $config['foreign'];
             $class = $config['class'];
-            $object->set($foreign, $object->get($local));
+            $value = is_null($object)?null:$object->get($local);
+            $this->set($foreign, $value);
         }
         return $this;
     }
@@ -510,13 +509,20 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      * @param Entity $object
      * @return \Quartz\Object\Entity 
      */
-    protected function setObjectRelation($relation, Entity $object)
+    protected function setObjectRelation($relation, Entity $object, $one = true)
     {
-        if (!isset($this->objectsLinked[$relation]))
+        if( $one )
         {
-            $this->objectsLinked[$relation] = array();
+            $this->objectsLinked[$relation] = $object;
         }
-        $this->objectsLinked[$relation][] = $object;
+        else
+        {
+            if (!isset($this->objectsLinked[$relation]))
+            {
+                $this->objectsLinked[$relation] = array();
+            }
+            $this->objectsLinked[$relation][] = $object;
+        }
         return $this;
     }
 
@@ -616,8 +622,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
         foreach ($this->getTable()->getProperties() as $property)
         {
             //$setter = $this->getSetter($property);
-            $setter = 'set';
-            if (!isset($row[$property]))
+            //$setter = 'set';
+            if (!array_key_exists($property, $row))
             {
                 $this->set($property, $this->getTable()->getDefaultValue($property));
             } else

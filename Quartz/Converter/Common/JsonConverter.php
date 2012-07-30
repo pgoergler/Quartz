@@ -12,11 +12,11 @@ class JsonConverter implements \Quartz\Converter\ConverterInterface
 
     public function fromDb($data, $type = null)
     {
-        if( $data == 'NULL' )
+        if ($data == 'NULL')
         {
             return null;
         }
-        
+
         if (is_null($type))
         {
             throw new \Exception(sprintf('Json converter must be given a type.'));
@@ -24,7 +24,8 @@ class JsonConverter implements \Quartz\Converter\ConverterInterface
 
         if ($data !== "{NULL}" and $data !== "{}" and $data !== "[]")
         {
-            return json_decode($data, true);
+            $json = json_decode($data, true);
+            return $json;
         } else
         {
             return array();
@@ -35,16 +36,23 @@ class JsonConverter implements \Quartz\Converter\ConverterInterface
     {
         if (is_null($type))
         {
-            throw new \Exception(sprintf('Json converter must be given a type.'));
+            throw new \InvalidArgumentException(sprintf('Json converter must be given a type.'));
         }
         if (!is_array($data))
         {
             if (is_null($data))
             {
                 return 'NULL';
+            } else
+            {
+                $json = json_encode($data);
+                if( $json !== false )
+                {
+                    return $json;
+                }
             }
 
-            throw new \Exception(sprintf("Json converter toDb() data must be an array ('%s' given).", gettype($data)));
+            throw new \InvalidArgumentException(sprintf("Json converter toDb() data must be an array ('%s' given).", gettype($data)));
         }
         return json_encode($data);
     }

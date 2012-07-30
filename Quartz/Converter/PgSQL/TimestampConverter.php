@@ -12,7 +12,7 @@ class TimestampConverter implements \Quartz\Converter\ConverterInterface
 
     public function fromDb($data, $type = null)
     {
-        if( $data == 'NULL' )
+        if ($data === 'NULL' || $data === 'null' || $data === null)
         {
             return null;
         }
@@ -29,6 +29,7 @@ class TimestampConverter implements \Quartz\Converter\ConverterInterface
         {
             return 'NULL';
         }
+        
         if (!$data instanceof \DateTime)
         {
             if(is_numeric($data))

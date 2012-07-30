@@ -10,6 +10,7 @@ namespace Quartz\Object;
 class Table
 {
 
+    protected $orm = null;
     protected $connection = null;
     protected $databaseName = null;
     protected $primaryKeys = array();
@@ -20,7 +21,7 @@ class Table
     protected $hasMany = array();
     protected $hasAndBelongsToMany = array();
 
-    public function __construct(\Quartz\Connection\Connection $conn = null)
+    public function __construct(\Quartz\Connection\Connection $conn = null, \Quartz\Quartz $orm = null)
     {
         if (!is_null($conn))
         {
@@ -31,8 +32,37 @@ class Table
             $this->setConnection(\Quartz\Quartz::getInstance()->getConnection('default'));
             $this->setDatabaseName(\Quartz\Quartz::getInstance()->getDatabaseName('default'));
         }
+        
+        if( !is_null($orm) )
+        {
+            $this->orm = $orm;
+        }
+        else
+        {
+            $this->orm = \Quartz\Quartz::getInstance();
+        }
+    }
+    
+    /**
+     *
+     * @param \Quartz\Quartz $orm
+     * @return \Quartz\Object\Table 
+     */
+    public function setORM(\Quartz\Quartz $orm)
+    {
+        $this->orm = $orm;
+        return $this;
     }
 
+    /**
+     *
+     * @return \Quartz\Quartz
+     */
+    public function getORM()
+    {
+        return $this->orm;
+    }
+    
     /**
      *
      * @param \Quartz\Connection\Connection $db
