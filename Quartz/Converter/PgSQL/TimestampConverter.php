@@ -12,7 +12,7 @@ class TimestampConverter implements \Quartz\Converter\ConverterInterface
 
     public function fromDb($data, $type = null)
     {
-        if ($data === 'NULL' || $data === 'null' || $data === null)
+        if ($data === 'NULL' || $data === 'null' || $data === null || $data === '')
         {
             return null;
         }
