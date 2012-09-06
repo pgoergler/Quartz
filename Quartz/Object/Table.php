@@ -366,7 +366,7 @@ class Table
      */
     public function count(array $criteria = array())
     {
-        return intval($this->getDatabaseConnection()->count($this, $criteria));
+        return intval($this->getConnection()->count($this, $criteria));
     }
 
     /**

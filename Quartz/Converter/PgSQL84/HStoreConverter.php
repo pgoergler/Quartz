@@ -22,6 +22,7 @@ class HStoreConverter implements \Quartz\Converter\ConverterInterface
             return array();
         }
         
+        $data = preg_replace("#'(.*?)'::hstore#", '$1', $data);
         $split = preg_split('/[,\s]*"([^"]+)"[,\s]*|[,=>\s]+/', $data, 0, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
         $hstore = array();
         

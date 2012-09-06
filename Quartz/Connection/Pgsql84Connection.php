@@ -186,7 +186,7 @@ class Pgsql84Connection extends Connection
         $query = 'SELECT * FROM ' . $tableName
                 . (count($where) == 0 ? '' : ' WHERE ' . implode(' AND ', $where) )
                 . (is_null($orderby) ? '' : ' ORDER BY ' . $orderby )
-                . (is_null($limit) ? '' : ' LIMIT ' . $limit . (is_null($offset) ? '' : ' OFFSET ' . $offset));
+                . (is_null($limit) ? '' : ' LIMIT ' . $limit . (is_null($offset) ? '' : ' OFFSET ' . ($offset * $limit)));
         if( $forUpdate )
         {
             $query .= ' FOR UPDATE';
