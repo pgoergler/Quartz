@@ -35,14 +35,14 @@ class HStoreConverter implements \Quartz\Converter\ConverterInterface
 
     public function toDb($data, $type = null)
     {
-        if( is_null($data) )
+        if( is_null($data) || $data === '')
         {
             return "''::hstore";
         }
         
         if (!is_array($data))
         {
-            throw new \Exception(sprintf("HStore::toDb takes an associative array as parameter ('%s' given).", gettype($data)));
+            throw new \Exception(sprintf("HStore::toDb takes an associative array as parameter ('%s::%s' given).", $data, gettype($data)));
         }
 
         $insert_values = array();

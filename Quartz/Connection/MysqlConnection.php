@@ -174,15 +174,15 @@ class MysqlConnection extends Connection
                 $where[] = $v;
             } else
             {
-                $where[] = "$k = '" . $v . "'";
+                $where[] = "$k = " . $this->castToSQL($v);
             }
         }
 
         $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
 
         $query = 'SELECT * FROM ' . $tableName
-                . (count($where) == 0 ? '' : ' WHERE ' . implode(' AND ', $where) )
-                . (is_null($orderby) ? '' : ' ORDER BY ' . $orderby )
+                . (empty($where) ? '' : ' WHERE ' . implode(' AND ', $where) )
+                . (is_null($orderby) || empty($orderby) ? '' : ' ORDER BY ' . $orderby )
                 . (is_null($limit) ? '' : ' LIMIT ' . $limit . (is_null($offset) ? '' : ', ' . $offset));
         
         if( $forUpdate )
@@ -361,6 +361,12 @@ class MysqlConnection extends Connection
         {
             return "'$value'";
         }
+
+        if (is_bool($value))
+        {
+            return $value ? "1" : "0";
+        }
+
         return $value;
     }
 

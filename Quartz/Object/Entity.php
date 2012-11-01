@@ -52,7 +52,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     public function __clone()
     {
         $this->setNew(true);
-        $this->values = clone $this->values;
+        //$this->values = clone $this->values;
         $this->exists = false;
     }
 
@@ -509,7 +509,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      * @param Entity $object
      * @return \Quartz\Object\Entity 
      */
-    protected function setObjectRelation($relation, Entity $object, $one = true)
+    protected function setObjectRelation($relation, Entity $object = null, $one = true)
     {
         if( $one )
         {

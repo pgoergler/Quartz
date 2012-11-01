@@ -472,6 +472,7 @@ class Table
      * @param array $order
      * @param int $limit
      * @param int $offset
+     * @param boolean $forUpdate
      * @return array 
      */
     public function find(array $criteria = array(), array $order = null, $limit = null, $offset = 0, $forUpdate = false)
@@ -514,6 +515,21 @@ class Table
                               $obj->setNew(false);
                               return $obj; */
                         }, $res);
+    }
+    
+    /**
+     *
+     * @param array $criteria
+     * @param boolean $forUpdate 
+     */
+    public function findOne(array $criteria = array(), array $order = null, $forUpdate = false)
+    {
+        $res = $this->find($criteria, $order, 1, 0, $forUpdate);
+        if (count($res) > 0)
+        {
+            return array_shift($res);
+        }
+        return null;
     }
 
     /**

@@ -36,7 +36,7 @@ class HStoreConverter implements \Quartz\Converter\ConverterInterface
 
     public function toDb($data, $type = null)
     {
-        if( is_null($data) )
+        if( is_null($data) || $data === '')
         {
             return "''::hstore";
         }
