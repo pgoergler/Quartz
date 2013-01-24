@@ -3,14 +3,14 @@
 namespace Quartz\Connection;
 
 /**
- * Description of MysqlConnection
+ * Description of MysqliConnection
  *
  * @author paul
  */
-class MysqlConnection extends Connection
+class MysqliConnection extends Connection
 {
 
-    protected $rConnect;
+    protected $mysqli;
     protected $rLastQuery;
     protected $sLastQuery;
     protected $isPersistant = false;
@@ -38,23 +38,27 @@ class MysqlConnection extends Connection
 
     public function connect()
     {
+        $host = $this->hostname;
+        $port = 3306;
+        if (preg_match('#^(.*?):([0-9]+)$#', $host, $m))
+        {
+            $host = $m[1];
+            $port = $m[2];
+        }
+
+
+
+
         if (isset($this->extra['persistant']) && $this->extra['persistant'])
         {
-            $this->rConnect = mysql_pconnect($this->hostname, $this->user, $this->password, true);
+            $host = 'p:' . $host;
             $this->isPersistant = true;
-        } else
-        {
-            $this->rConnect = mysql_connect($this->hostname, $this->user, $this->password, true);
         }
+        $this->mysqli = new \mysqli($host, $this->user, $this->password, $this->dbname, $port);
 
-        if (!$this->rConnect)
+        if (\mysqli_connect_error())
         {
-            throw new \RuntimeException("CONNECTION ERROR To(" . $this->hostname . ")");
-        }
-
-        if (!@mysql_select_db($this->dbname, $this->rConnect))
-        {
-            throw new \RuntimeException("SELECT DB ERROR : " . $this->dbname);
+            throw new \RuntimeException("CONNECTION ERROR To(" . $this->hostname . ") : " . $this->error());
         }
 
         $this->closed = false;
@@ -64,7 +68,7 @@ class MysqlConnection extends Connection
     {
         $this->closed = true;
         if (!$this->isPersistant)
-            @mysql_close($this->rConnect);
+            $this->mysqli->close();
     }
 
     public function isClosed()
@@ -74,7 +78,7 @@ class MysqlConnection extends Connection
 
     public function &getConnection()
     {
-        return $this->rConnect;
+        return $this->mysqli;
     }
 
     public function convertClassType($type)
@@ -285,14 +289,7 @@ class MysqlConnection extends Connection
         //\Ongoo\Logger\Logging::get()->trace($sQuery);
 
         $this->sLastQuery = $sQuery;
-        if ($unbuffered == false)
-        {
-            $this->rLastQuery = @mysql_query($sQuery, $this->rConnect);
-        } else
-        {
-            $this->rLastQuery = @mysql_unbuffered_query($sQuery, $this->rConnect);
-        }
-
+        $this->rLastQuery = \mysqli_query($this->mysqli, $sQuery);
         if ($this->error())
             throw new \RuntimeException($sQuery . "\n" . $this->error());
 
@@ -300,17 +297,17 @@ class MysqlConnection extends Connection
     }
 
     /* iResultType:
-     * MYSQL_NUM: les indices du tableau sont des entiers.
-     * MYSQL_ASSOC: les indices du tableau sont les noms des clefs
+     * MYSQLI_NUM: les indices du tableau sont des entiers.
+     * MYSQLI_ASSOC: les indices du tableau sont les noms des clefs
      */
 
-    public function farray($rQuery = null, $callback = null, $iResultType = MYSQL_ASSOC)
+    public function farray($rQuery = null, $callback = null, $iResultType = MYSQLI_ASSOC)
     {
-        $iResultType = ($iResultType == null) ? MYSQL_ASSOC : $iResultType;
+        $iResultType = ($iResultType == null) ? MYSQLI_ASSOC : $iResultType;
         if ($rQuery == null)
             $rQuery = $this->rLastQuery;
 
-        $row = @mysql_fetch_array($rQuery, $iResultType);
+        $row = \mysqli_fetch_array($rQuery, $iResultType);
         if ($row && !is_null($callback) && is_callable($callback))
         {
             $row = $callback($row);
@@ -318,9 +315,9 @@ class MysqlConnection extends Connection
         return $row;
     }
 
-    public function fall($rQuery = null, $callback = null, $iResultType = MYSQL_ASSOC)
+    public function fall($rQuery = null, $callback = null, $iResultType = MYSQLI_ASSOC)
     {
-        $iResultType = ($iResultType == null) ? MYSQL_ASSOC : $iResultType;
+        $iResultType = ($iResultType == null) ? MYSQLI_ASSOC : $iResultType;
         $result = array();
         while ($row = $this->farray($rQuery, $callback, $iResultType))
         {
@@ -334,19 +331,21 @@ class MysqlConnection extends Connection
         if ($rQuery == null)
             $rQuery = $this->rLastQuery;
 
-        return mysql_free_result($rQuery);
+        return \mysqli_free_result($rQuery);
     }
 
     /* Renvoie le dernier id de la requete INSERT */
 
     public function lastid()
     {
-        return @mysql_insert_id();
+        return @\mysqli_insert_id();
     }
 
     public function error()
     {
-        return @mysql_error($this->rConnect);
+        if( $this->mysqli && \mysqli_connect_error() ){
+            return sprintf("[%s] %s", \mysqli_connect_errno(), \mysqli_connect_error() );
+        }
     }
 
     public function castToSQL($value)

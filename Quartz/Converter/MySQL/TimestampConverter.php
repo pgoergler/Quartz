@@ -12,9 +12,13 @@ class TimestampConverter implements \Quartz\Converter\ConverterInterface
 
     public function fromDb($data, $type = null)
     {
-        if( $data == 'NULL' )
+        if ($data === 'NULL' || $data === 'null' || $data === null || $data === '')
         {
             return null;
+        }
+        if( !is_null($type) )
+        {
+            return new \DateTime(preg_replace('#^\'(.*?)\'$#', '$1', $data));
         }
         return new \DateTime($data);
     }
@@ -37,7 +41,7 @@ class TimestampConverter implements \Quartz\Converter\ConverterInterface
             }
         }
 
-        return sprintf("'%s'", $data->format('Y-m-d H:i:s.u'));
+        return sprintf("'%s'", $data->format('Y-m-d H:i:s'));
     }
 
 }

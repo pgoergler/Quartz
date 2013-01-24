@@ -54,7 +54,7 @@ class JsonConverter implements \Quartz\Converter\ConverterInterface
 
             throw new \InvalidArgumentException(sprintf("Json converter toDb() data must be an array ('%s' given).", gettype($data)));
         }
-        return json_encode($data);
+        return "'" . preg_replace("#'#", "\\'", json_encode($data)) . "'";
     }
 
 }

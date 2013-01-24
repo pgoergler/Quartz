@@ -32,7 +32,7 @@ class Table
             $this->setConnection(\Quartz\Quartz::getInstance()->getConnection('default'));
             $this->setDatabaseName(\Quartz\Quartz::getInstance()->getDatabaseName('default'));
         }
-        
+
         if( !is_null($orm) )
         {
             $this->orm = $orm;
@@ -42,11 +42,11 @@ class Table
             $this->orm = \Quartz\Quartz::getInstance();
         }
     }
-    
+
     /**
      *
      * @param \Quartz\Quartz $orm
-     * @return \Quartz\Object\Table 
+     * @return \Quartz\Object\Table
      */
     public function setORM(\Quartz\Quartz $orm)
     {
@@ -62,11 +62,11 @@ class Table
     {
         return $this->orm;
     }
-    
+
     /**
      *
      * @param \Quartz\Connection\Connection $db
-     * @return \Quartz\Object\Table 
+     * @return \Quartz\Object\Table
      */
     public function setConnection(\Quartz\Connection\Connection &$db)
     {
@@ -215,7 +215,7 @@ class Table
 
     /**
      *
-     * @return array 
+     * @return array
      */
     public function getDefaultValues()
     {
@@ -229,7 +229,7 @@ class Table
 
     /**
      *
-     * @return \Quartz\Object\Table 
+     * @return \Quartz\Object\Table
      */
     public function beginTransaction()
     {
@@ -239,7 +239,7 @@ class Table
 
     /**
      *
-     * @return \Quartz\Object\Table 
+     * @return \Quartz\Object\Table
      */
     public function commit()
     {
@@ -249,7 +249,7 @@ class Table
 
     /**
      *
-     * @return \Quartz\Object\Table 
+     * @return \Quartz\Object\Table
      */
     public function rollBack()
     {
@@ -263,7 +263,7 @@ class Table
      * @param string $local key
      * @param string $foreign key
      * @param string $alias
-     * @return \Quartz\Object\Table 
+     * @return \Quartz\Object\Table
      */
     public function hasOne($className, $local, $foreign, $alias = null, $orderBy = null, $limit = null, $offset = null)
     {
@@ -289,7 +289,7 @@ class Table
      * @param string $local key
      * @param string $foreign key
      * @param string $alias
-     * @return \Quartz\Object\Table 
+     * @return \Quartz\Object\Table
      */
     public function hasMany($className, $local, $foreign, $alias = null, $orderBy = null, $limit = null, $offset = null)
     {
@@ -312,7 +312,7 @@ class Table
     /**
      *
      * @param string $className
-     * @return boolean 
+     * @return boolean
      */
     public function hasOneRelation($className)
     {
@@ -322,7 +322,7 @@ class Table
     /**
      *
      * @param string $className
-     * @return boolean 
+     * @return boolean
      */
     public function hasManyRelation($className)
     {
@@ -332,8 +332,8 @@ class Table
     /**
      *
      * @param string $className
-     * @return array 
-     * @throws \Quartz\Exceptions\NotExistsException 
+     * @return array
+     * @throws \Quartz\Exceptions\NotExistsException
      */
     public function getOneRelation($className)
     {
@@ -347,8 +347,8 @@ class Table
     /**
      *
      * @param string $className
-     * @return array 
-     * @throws \Quartz\Exceptions\NotExistsException 
+     * @return array
+     * @throws \Quartz\Exceptions\NotExistsException
      */
     public function getManyRelation($className)
     {
@@ -374,7 +374,7 @@ class Table
      * @param string $methodName
      * @param array $args
      * @return mixed
-     * @throws \RuntimeException 
+     * @throws \RuntimeException
      */
     public function __call($methodName, $args)
     {
@@ -473,7 +473,7 @@ class Table
      * @param int $limit
      * @param int $offset
      * @param boolean $forUpdate
-     * @return array 
+     * @return array
      */
     public function find(array $criteria = array(), array $order = null, $limit = null, $offset = 0, $forUpdate = false)
     {
@@ -516,11 +516,11 @@ class Table
                               return $obj; */
                         }, $res);
     }
-    
+
     /**
      *
      * @param array $criteria
-     * @param boolean $forUpdate 
+     * @param boolean $forUpdate
      */
     public function findOne(array $criteria = array(), array $order = null, $forUpdate = false)
     {
@@ -536,7 +536,7 @@ class Table
      *
      * @param string $property
      * @param mixed $value
-     * @return array of Entity 
+     * @return array of Entity
      */
     public function findBy($property, $value)
     {
@@ -558,7 +558,7 @@ class Table
      *
      * @param string $property
      * @param mixed $value
-     * @return Entity 
+     * @return Entity
      */
     public function findOneBy($property, $value)
     {
