@@ -232,6 +232,17 @@ abstract class Connection
         );
     }
 
+    
+    public function create(\Quartz\Object\Table $table)
+    {
+        throw new \RuntimeException('Not implemented yet.');
+    }
+    
+    public function drop(\Quartz\Object\Table $table, $cascade = false)
+    {
+        $query = 'DROP TABLE ' . $table->getName() . ( $cascade ? ' CASCADE' : '') . ';';
+        return $this->query($query);
+    }
 }
 
 ?>

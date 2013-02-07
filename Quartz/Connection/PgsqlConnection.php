@@ -13,10 +13,10 @@ class PgsqlConnection extends Connection
     public function configure()
     {
         $this->registerConverter('Array', new \Quartz\Converter\PgSQL\ArrayConverter($this), array());
-        $this->registerConverter('Json', new \Quartz\Converter\Common\JsonConverter(), array('json'));
-        $this->registerConverter('Boolean', new \Quartz\Converter\Common\BooleanConverter(), array('bool', 'boolean'));
-        $this->registerConverter('Number', new \Quartz\Converter\Common\NumberConverter(), array('int2', 'int4', 'int8', 'numeric', 'float4', 'float8', 'integer', 'sequence'));
-        $this->registerConverter('String', new \Quartz\Converter\Common\StringConverter(), array('varchar', 'char', 'text', 'uuid', 'tsvector', 'xml', 'bpchar', 'string', 'enum'));
+        $this->registerConverter('Json', new \Quartz\Converter\PgSQL\JsonConverter(), array('json'));
+        $this->registerConverter('Boolean', new \Quartz\Converter\PgSQL\BooleanConverter(), array('bool', 'boolean'));
+        $this->registerConverter('Number', new \Quartz\Converter\PgSQL\NumberConverter(), array('int2', 'int4', 'int8', 'numeric', 'float4', 'float8', 'integer', 'sequence'));
+        $this->registerConverter('String', new \Quartz\Converter\PgSQL\StringConverter(), array('varchar', 'char', 'text', 'uuid', 'tsvector', 'xml', 'bpchar', 'string', 'enum'));
         $this->registerConverter('Timestamp', new \Quartz\Converter\PgSQL\TimestampConverter(), array('timestamp', 'date', 'time', 'datetime', 'unixtime'));
         $this->registerConverter('HStore', new \Quartz\Converter\PgSQL\HStoreConverter(), array('hstore'));
         //$this->registerConverter('Interval', new Converter\PgInterval(), array('interval'));
@@ -122,10 +122,6 @@ class PgsqlConnection extends Connection
     public function count($table, array $criteria = array())
     {
         $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
-
-        //Logger::getRootLogger()->trace($tableName);
-        //Logger::getRootLogger()->trace($criteria);
-
         $where = array();
         foreach ($criteria as $k => $v)
         {
@@ -134,7 +130,7 @@ class PgsqlConnection extends Connection
                 $where[] = $v;
             } else
             {
-                $where[] = "$k = " . $this->castToSQL($v);
+                $where[] = $this->escapeFieldName($field) . ' = ' . $this->castToSQL($v);
             }
         }
         if (count($where) == 0)
@@ -177,8 +173,7 @@ class PgsqlConnection extends Connection
                 $where[] = $v;
             } else
             {
-                //$where[] = "$k = '" . $v . "'";
-                $where[] = "$k = " . $this->castToSQL($v);
+                $where[] = $this->escapeFieldName($k) . ' = ' . $this->castToSQL($v);
             }
         }
 
@@ -188,7 +183,7 @@ class PgsqlConnection extends Connection
                 . (empty($where) ? '' : ' WHERE ' . implode(' AND ', $where) )
                 . (is_null($orderby) || empty($orderby) ? '' : ' ORDER BY ' . $orderby )
                 . (is_null($limit) ? '' : ' LIMIT ' . $limit . (is_null($offset) ? '' : ' OFFSET ' . ($offset * $limit)));
-        if( $forUpdate )
+        if ($forUpdate)
         {
             $query .= ' FOR UPDATE';
         }
@@ -200,29 +195,12 @@ class PgsqlConnection extends Connection
 
     public function insert(\Quartz\Object\Table $table, $object)
     {
-        $newObjectClass = $table->getObjectClassName();
-
         if ($object instanceof \Quartz\Object\Entity)
         {
             //$object = $object->toArray();
         }
 
-        //$primaries = $table->getPrimaryKeys();
-        /* foreach ($primaries as $primary)
-          {
-          if ($table->getPropertyType($primary) == 'sequence')
-          {
-          $res = $this->query('SELECT nextval(\'' . $table->getName() . '_' . $primary . '_seq\'::regclass) AS counter;');
-          $row = $this->farray($res);
-          $this->free($res);
-          $object[$primary] = $row['counter'];
-          }
-          } */
-
-        //Logger::getRootLogger()->trace($row);
-
-        $query = 'INSERT INTO ' . $table->getName() . ' (' . implode(",", array_keys($object)) . ") VALUES (" . implode(",", $object) . ");";
-
+        $query = 'INSERT INTO ' . $table->getName() . ' (' . implode(', ', array_map(array($this, 'escapeFieldName'), array_keys($object))) . ') VALUES (' . implode(",", $object) . ");";
         $this->query($query);
 
         return $object;
@@ -234,7 +212,7 @@ class PgsqlConnection extends Connection
 
         $callback = function($k, $v) use($self)
                 {
-                    return " $k = " . $v . " ";
+                    return $self->escapeFieldName($k) . ' = ' . $v . " "; // no castToSQL because already done by table->convertToDb()
                 };
 
         $where = array();
@@ -245,14 +223,14 @@ class PgsqlConnection extends Connection
                 $where[] = $v;
             } else
             {
-                $where[] = "$k = " . $this->castToSQL($v);
+                $where[] = $this->escapeFieldName($k) . " = " . $this->castToSQL($v);
             }
         }
 
         $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
 
         $query = "UPDATE " . $tableName . " SET ";
-        $query .= implode(", ", array_map($callback, array_keys($object), $object));
+        $query .= implode(', ', array_map($callback, array_keys($object), $object));
         $query .= " WHERE " . implode(' AND ', $where) . ";";
 
         return $this->query($query);
@@ -268,7 +246,7 @@ class PgsqlConnection extends Connection
                 $where[] = $v;
             } else
             {
-                $where[] = "$k = " . $this->castToSQL($v);
+                $where[] = $this->escapeFieldName($k) . ' = ' . $this->castToSQL($v);
             }
         }
 
@@ -353,7 +331,7 @@ class PgsqlConnection extends Connection
         if ($rQuery == null)
             $rQuery = $this->rLastQuery;
 
-        if(is_resource($rQuery))
+        if (is_resource($rQuery))
             return pg_free_result($rQuery);
 
         return null;
@@ -369,6 +347,11 @@ class PgsqlConnection extends Connection
     public function error()
     {
         return @pg_last_error($this->rConnect);
+    }
+
+    public function escapeFieldName($field)
+    {
+        return '"' . $field . '"';
     }
 
     public function castToSQL($value)
@@ -389,6 +372,57 @@ class PgsqlConnection extends Connection
         }
 
         return $value;
+    }
+
+    public function create(\Quartz\Object\Table $table)
+    {
+        $sql = "CREATE TABLE %table_name% ( %fields%, %constraints% ) WITH ( OIDS = FALSE );";
+
+        $fields = array();
+        $constraints = array();
+        $primaries = array();
+
+        foreach ($table->getColumns() as $columnName => $configuration)
+        {
+            $type = strtolower($table->getPropertyType($columnName));
+            $converter = null;
+            $isArray = false;
+
+            if (preg_match('#^([a-z0-9_\.-]+)$#i', $type, $matchs))
+            {
+                $type = $matchs[1];
+            } else if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
+            {
+                $type = $matchs[1];
+                $isArray = $matchs[2];
+            } else if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
+            {
+                $type = $matchs[1];
+            }
+
+            $converter = $this->getConverterForType($type);
+
+            $sqlType = $converter->translate($type) . ( $isArray !== false ? "[$isArray]" : '');
+            $notNull = $configuration['notnull'] ? 'NOT NULL' : '';
+            $default = is_null($configuration['value']) ? '' : $configuration['value'];
+
+            $fields[] = sprintf('%s %s %s', $this->escapeFieldName($columnName), $sqlType, $notNull, $default);
+
+            if ($configuration['primary'])
+            {
+                $primaries[] = $this->escapeFieldName($columnName);
+            }
+        }
+
+        $constraints[] = 'PRIMARY KEY (' . implode(', ', $primaries) . ')';
+
+        $replace = array(
+            '%table_name%' => $table->getName(),
+            '%fields%' => implode(', ', $fields),
+            '%constraints%' => implode(', ', $constraints),
+        );
+
+        return $this->query(strtr($sql, $replace));
     }
 
 }

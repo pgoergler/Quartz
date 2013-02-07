@@ -18,9 +18,9 @@ class MysqlConnection extends Connection
     public function configure()
     {
         $this->registerConverter('Array', new \Quartz\Converter\MySQL\ArrayConverter($this), array());
-        $this->registerConverter('Boolean', new \Quartz\Converter\Common\BooleanConverter(), array('bool', 'boolean'));
-        $this->registerConverter('Number', new \Quartz\Converter\Common\NumberConverter(), array('int2', 'int4', 'int8', 'numeric', 'float4', 'float8', 'integer', 'sequence'));
-        $this->registerConverter('String', new \Quartz\Converter\Common\StringConverter(), array('varchar', 'char', 'text', 'uuid', 'tsvector', 'xml', 'bpchar', 'string', 'enum'));
+        $this->registerConverter('Boolean', new \Quartz\Converter\MySQL\BooleanConverter(), array('bool', 'boolean'));
+        $this->registerConverter('Number', new \Quartz\Converter\MySQL\NumberConverter(), array('int2', 'int4', 'int8', 'numeric', 'float4', 'float8', 'integer', 'sequence'));
+        $this->registerConverter('String', new \Quartz\Converter\MySQL\StringConverter(), array('varchar', 'char', 'text', 'uuid', 'tsvector', 'xml', 'bpchar', 'string', 'enum'));
         $this->registerConverter('Timestamp', new \Quartz\Converter\MySQL\TimestampConverter(), array('timestamp', 'date', 'time', 'datetime', 'unixtime'));
         $this->registerConverter('HStore', new \Quartz\Converter\MySQL\HStoreConverter(), array('hstore'));
         //$this->registerConverter('Interval', new Converter\PgInterval(), array('interval'));

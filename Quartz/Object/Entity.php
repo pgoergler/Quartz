@@ -48,7 +48,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         return $this->exists;
     }
-    
+
     public function __clone()
     {
         $this->setNew(true);
@@ -81,7 +81,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
     /**
      *
-     * @return array 
+     * @return array
      */
     public function getValuesUpdated()
     {
@@ -121,11 +121,11 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                 }, $property);
         return 'set' . ucfirst($property);
     }
-    
+
     /**
      *
      * @param string $property
-     * @return mixed 
+     * @return mixed
      */
     public function get($property)
     {
@@ -137,7 +137,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      *
      * @param string $property
      * @param mixed $value
-     * @return \Quartz\Object\Entity 
+     * @return \Quartz\Object\Entity
      * @throws \Quartz\Exceptions\NotExistsException
      */
     public function set($property, $value)
@@ -155,7 +155,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     /**
      *
      * @param string $property
-     * @return boolean 
+     * @return boolean
      */
     public function has($property)
     {
@@ -166,7 +166,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      *
      * @param string $property
      * @param mixed $value
-     * @return \Quartz\Object\Entity 
+     * @return \Quartz\Object\Entity
      * @throws \Quartz\Exceptions\NotExistsException
      */
     public function addTo($property, $value)
@@ -195,7 +195,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      *
      * @param string $property
      * @param mixed $value
-     * @return \Quartz\Object\Entity 
+     * @return \Quartz\Object\Entity
      * @throws \Quartz\Exceptions\NotExistsException
      */
     public function removeFrom($property, $value)
@@ -228,11 +228,11 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     /**
      * Add one object to a ManyToOne relation in order to update it during the
      * save action
-     * 
+     *
      * @param string $relation
      * @param Entity $object
      * @return \Quartz\Object\Entity
-     * @throws \RuntimeException 
+     * @throws \RuntimeException
      */
     public function setOneRelation($relation, Entity $object = null)
     {
@@ -248,7 +248,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             {
                 $this->objectsPreSave[$relation] = array();
             }
-            
+
             $config = $this->getTable()->getOneRelation($relation);
             $class = $config['class'];
             if (!$object instanceof $class)
@@ -263,13 +263,13 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     }
 
     /**
-     * Add objects to a oneToMany relation in order to update them during 
+     * Add objects to a oneToMany relation in order to update them during
      * the save action
      *
      * @param string $relation
      * @param array $objects
      * @return \Quartz\Object\Entity
-     * @throws \RuntimeException 
+     * @throws \RuntimeException
      */
     protected function setManyRelation($relation, array $objects = null)
     {
@@ -308,11 +308,11 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     }
 
     /**
-     * Return the objects linked with $this or if it the first "get" 
+     * Return the objects linked with $this or if it the first "get"
      * retrieve from DB
-     * 
+     *
      * @param string $relation
-     * @return array|null 
+     * @return array|null
      */
     public function getRelation($relation)
     {
@@ -342,7 +342,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      * @param array $args
      * @return \Quartz\Object\Entity
      * @throws \Quartz\Exceptions\NotExistsException
-     * @throws \RuntimeException 
+     * @throws \RuntimeException
      */
     public function __call($methodName, $args)
     {
@@ -426,10 +426,10 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
     /**
      * Retrieve linked object from DB
-     * 
+     *
      * @param string $relation
      * @param boolean $one
-     * @return Entity|array|null 
+     * @return Entity|array|null
      */
     protected function findRelation($relation, $one = true)
     {
@@ -488,7 +488,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $local = $config['local'];
             $foreign = $config['foreign'];
             $class = $config['class'];
-            $value = is_null($object)?null:$object->get($foreign);
+            $value = is_null($object) ? null : $object->get($foreign);
             $this->set($local, $value);
         } else if ($this->getTable()->hasManyRelation($relation))
         {
@@ -497,7 +497,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $local = $config['local'];
             $foreign = $config['foreign'];
             $class = $config['class'];
-            $value = is_null($object)?null:$object->get($local);
+            $value = is_null($object) ? null : $object->get($local);
             $this->set($foreign, $value);
         }
         return $this;
@@ -507,15 +507,14 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      *
      * @param string $relation
      * @param Entity $object
-     * @return \Quartz\Object\Entity 
+     * @return \Quartz\Object\Entity
      */
     protected function setObjectRelation($relation, Entity $object = null, $one = true)
     {
-        if( $one )
+        if ($one)
         {
             $this->objectsLinked[$relation] = $object;
-        }
-        else
+        } else
         {
             if (!isset($this->objectsLinked[$relation]))
             {
@@ -528,7 +527,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
     /**
      *
-     * @return \Quartz\Object\Entity 
+     * @return \Quartz\Object\Entity
      */
     protected function preSave()
     {
@@ -547,7 +546,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
     /**
      *
-     * @return \Quartz\Object\Entity 
+     * @return \Quartz\Object\Entity
      */
     public function save()
     {
@@ -560,7 +559,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
         {
             foreach ($this->values as $key => $value)
             {
-                if ($this->getTable()->getPropertyType($key) == 'sequence' && is_null($value) )
+                if ($this->getTable()->getPropertyType($key) == 'sequence' && is_null($value))
                 {
                     try
                     {
@@ -592,7 +591,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                 $values = $this->getTable()->convertToDb($this->getValuesUpdated());
 
                 $this->valuesUpdated = array();
-                
+
                 $conn->update($this->getTable()->getName(), $query, $values);
 
                 //$conn->updateEntity($this);
@@ -638,8 +637,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     }
 
     /**
-     * 
-     * @return \Quartz\Object\Entity 
+     *
+     * @return \Quartz\Object\Entity
      */
     public function postSave()
     {
@@ -681,7 +680,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     /**
      *
      * @param string|int $name
-     * @return boolean 
+     * @return boolean
      */
     public function offsetExists($name)
     {
@@ -692,7 +691,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      *
      * @param string $name
      * @return mixed
-     * @throws \InvalidArgumentException 
+     * @throws \InvalidArgumentException
      */
     public function offsetGet($name)
     {
@@ -720,7 +719,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      *
      * @param string|int $offset
      * @param mixed $value
-     * @throws \InvalidArgumentException 
+     * @throws \InvalidArgumentException
      */
     public function offsetSet($offset, $value)
     {
@@ -735,7 +734,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     /**
      *
      * @param string $offset
-     * @throws \LogicException 
+     * @throws \LogicException
      */
     public function offsetUnset($offset)
     {
@@ -762,5 +761,3 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     }
 
 }
-
-?>

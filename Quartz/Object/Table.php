@@ -132,6 +132,7 @@ class Table
             'type' => $this->getConnection()->convertClassType(strtolower($type)),
             'value' => $defaultValue,
             'notnull' => ($notnull) ? true : false,
+            'primary' => false,
         );
 
         switch ($type)
@@ -143,6 +144,7 @@ class Table
 
         if (isset($options['primary']) && $options['primary'] === true)
         {
+            $conf['primary'] = true;
             $this->addPrimaryKey($property);
         }
 
@@ -168,6 +170,20 @@ class Table
             }
         }
         throw new \Quartz\Exceptions\NotExistsException('In ' . $this->getObjectClassName() . ' [' . $property . '] property');
+    }
+
+    public function getColumns()
+    {
+        return $this->properties;
+    }
+
+    public function getColumn($field)
+    {
+        if( $this->hasProperty($field))
+        {
+            return $this->properties[$field];
+        }
+        return null;
     }
 
     public function getProperties()
@@ -484,36 +500,6 @@ class Table
         return array_map(function($item) use($self, $className)
                         {
                             return $self->convertFromDb($item);
-                            /* $obj = new $className();
-                              $values = array();
-                              foreach ($self->getProperties() as $property)
-                              {
-                              if (!isset($item[$property]))
-                              {
-                              $values[$property] = $self->getDefaultValue($property);
-                              } else
-                              {
-                              $type = $self->getPropertyType($property);
-                              if (preg_match('/([a-z0-9_\.-]+)(\[\])?/i', $type, $matchs))
-                              {
-                              if (count($matchs) > 2)
-                              {
-                              $converter = $self->getConnection()
-                              ->getConverterFor('Array');
-                              } else
-                              {
-                              $converter = $self->getConnection()
-                              ->getConverterForType($type);
-                              }
-                              }
-                              $nvalue = $converter->fromDb($item[$property], $matchs[1]);
-                              $values[$property] = $nvalue;
-                              }
-                              }
-                              print_r($values);
-                              $obj->hydrate($values);
-                              $obj->setNew(false);
-                              return $obj; */
                         }, $res);
     }
 
@@ -575,6 +561,13 @@ class Table
         return $this->getConnection()->delete($this, $criteria, $options);
     }
 
-}
+    public function create()
+    {
+        return $this->getConnection()->create($this);
+    }
 
-?>
+    public function drop($cascade = false)
+    {
+        return $this->getConnection()->drop($this, $cascade);
+    }
+}
