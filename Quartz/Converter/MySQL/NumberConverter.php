@@ -1,6 +1,6 @@
 <?php
 
-namespace Quartz\Converter\Common;
+namespace Quartz\Converter\MySQL;
 
 /**
  * Description of NumberConverter
@@ -62,6 +62,43 @@ class NumberConverter implements \Quartz\Converter\ConverterInterface
             return intval($data);
         }
         throw new \InvalidArgumentException($data . ' is not a number (int, float or double)');
+    }
+
+    public function translate($type)
+    {
+        switch ($type)
+        {
+            case 'smallint':
+            case 'int2':
+                return 'SMALLINT';
+
+            case 'bigint':
+            case 'int8':
+                return 'BIGINT';
+
+            case 'numeric':
+                if (!preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
+                {
+                    return 'INTEGER';
+                }
+                return 'DECIMAL(' . $matchs[2] . ')';
+
+            case 'real':
+            case 'float4':
+                return 'FLOAT';
+
+            case 'double':
+            case 'float8':
+                return 'DOUBLE';
+
+            case 'sequence':
+                return 'SERIAL';
+            case 'sequence8':
+                return 'SERIAL';
+
+            default:
+                return 'INTEGER';
+        }
     }
 
 }

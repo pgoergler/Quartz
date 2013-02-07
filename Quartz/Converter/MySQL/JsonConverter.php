@@ -1,6 +1,6 @@
 <?php
 
-namespace Quartz\Converter\Common;
+namespace Quartz\Converter\MySQL;
 
 /**
  * Description of ArrayConverter
@@ -57,6 +57,10 @@ class JsonConverter implements \Quartz\Converter\ConverterInterface
         return "'" . preg_replace("#'#", "\\'", json_encode($data)) . "'";
     }
 
+    public function translate($type)
+    {
+        return 'text';
+    }
 }
 
 ?>

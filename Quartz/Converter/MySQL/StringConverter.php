@@ -1,6 +1,6 @@
 <?php
 
-namespace Quartz\Converter\Common;
+namespace Quartz\Converter\MySQL;
 
 /**
  * Description of StringConverter
@@ -38,6 +38,21 @@ class StringConverter implements \Quartz\Converter\ConverterInterface
         $data = str_replace("'", "''", $data);
         $data = str_replace('\\', '\\\\', $data);
         return sprintf("'%s'", $data);
+    }
+
+    public function translate($type)
+    {
+        if( $type == 'text ')
+        {
+            return 'TEXT';
+        }
+        
+        $size = '';
+        if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
+        {
+            $size = '(' . $matchs[2] . ')';
+        }
+        return "VARCHAR$size";
     }
 
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Quartz\Converter\Common;
+namespace Quartz\Converter\MySQL;
 
 /**
  * Description of BooleanConverter
@@ -32,6 +32,11 @@ class BooleanConverter implements \Quartz\Converter\ConverterInterface
         {
             return in_array($data, array('t', 'T', 'true', 'TRUE', 'yes', 'YES', 1, 'on', 'ON')) ? 'true' : 'false';
         }
+    }
+
+    public function translate($type)
+    {
+        return 'BOOLEAN';
     }
 
 }
