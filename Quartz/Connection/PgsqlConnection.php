@@ -130,7 +130,7 @@ class PgsqlConnection extends Connection
                 $where[] = $v;
             } else
             {
-                $where[] = $this->escapeFieldName($field) . ' = ' . $this->castToSQL($v);
+                $where[] = $this->escapeFieldName($k) . ' = ' . $this->castToSQL($v);
             }
         }
         if (count($where) == 0)
