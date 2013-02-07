@@ -31,6 +31,14 @@ interface ConverterInterface
      * @return String Db converted string for input.
      **/
     public function toDb($data, $type = null);
+    
+    /** 
+     *
+     * Return the SQL data type
+     * 
+     */
+    
+    public function translate($type);
 }
 
 ?>

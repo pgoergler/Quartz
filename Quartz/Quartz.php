@@ -18,7 +18,7 @@ class Quartz
 
     protected function __construct()
     {
-        
+
     }
 
     public function isInitialized()
@@ -28,7 +28,7 @@ class Quartz
 
     /**
      *
-     * @param array $configs 
+     * @param array $configs
      * @return \Quartz\Quartz
      */
     public function init(array $configs = array())
@@ -44,7 +44,7 @@ class Quartz
     }
 
     /**
-     * 
+     *
      * @return \Quartz\Quartz
      */
     public static function &getInstance()
@@ -58,7 +58,7 @@ class Quartz
     }
 
     /**
-     * 
+     *
      * @param string $className
      * @return \Quartz\Object\Table
      */
@@ -76,7 +76,7 @@ class Quartz
      *
      * @param string $className
      * @param \Quartz\Object\Table $table
-     * @return \Quartz\Quartz 
+     * @return \Quartz\Quartz
      */
     public function setTable($className, \Quartz\Object\Table &$table)
     {
@@ -110,9 +110,9 @@ class Quartz
             {
                 $config = $this->process($this->configs[$name]);
                 $this->configs[$name] = array_merge($this->configs[$name], $config);
-                
+
                 $driver = $this->configs[$name]['driver'];
-                
+
                 $conn = new $driver($this->configs[$name]['host'],
                                 $this->configs[$name]['user'],
                                 $this->configs[$name]['password'],
@@ -176,5 +176,3 @@ class Quartz
     }
 
 }
-
-?>

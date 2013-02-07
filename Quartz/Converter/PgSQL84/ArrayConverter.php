@@ -1,6 +1,6 @@
 <?php
 
-namespace Quartz\Converter\PgSQL;
+namespace Quartz\Converter\PgSQL84;
 
 /**
  * Description of ArrayConverter

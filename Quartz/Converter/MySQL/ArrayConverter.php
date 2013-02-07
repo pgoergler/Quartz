@@ -7,7 +7,7 @@ namespace Quartz\Converter\MySQL;
  *
  * @author paul
  */
-class ArrayConverter extends \Quartz\Converter\Common\JsonConverter
+class ArrayConverter extends JsonConverter
 {
 
 }

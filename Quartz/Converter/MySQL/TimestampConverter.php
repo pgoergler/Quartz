@@ -44,6 +44,11 @@ class TimestampConverter implements \Quartz\Converter\ConverterInterface
         return sprintf("'%s'", $data->format('Y-m-d H:i:s'));
     }
 
+    public function translate($type)
+    {
+        return "DATETIME";
+    }
+
 }
 
 ?>
