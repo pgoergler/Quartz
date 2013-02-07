@@ -56,6 +56,11 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
         $this->exists = false;
     }
 
+    public function hasChanged()
+    {
+        return $this->isNew == true || count($this->valuesUpdated) > 0;
+    }
+
     /**
      *
      * @return Table
