@@ -398,7 +398,7 @@ class Table
         {
             $function = $matches[1];
             $property = $this->getRealPropertyName($matches[2] . $matches[3]);
-
+            
             return $this->$function($property, $args[0], isset($args[1]) ? $args[1] : null);
         }
         throw new \RuntimeException($methodName . ' not implemented in ' . get_class($this));
@@ -537,7 +537,7 @@ class Table
             $order[$value] = 1;
         }
 
-        return $this->find($query, $order, null, $forUpdate);
+        return $this->find($query, $order, null, 0, $forUpdate);
     }
 
     /**
