@@ -399,7 +399,7 @@ class Table
             $function = $matches[1];
             $property = $this->getRealPropertyName($matches[2] . $matches[3]);
 
-            return $this->$function($property, $args[0]);
+            return $this->$function($property, $args[0], isset($args[1]) ? $args[1] : null);
         }
         throw new \RuntimeException($methodName . ' not implemented in ' . get_class($this));
     }
@@ -524,7 +524,7 @@ class Table
      * @param mixed $value
      * @return array of Entity
      */
-    public function findBy($property, $value)
+    public function findBy($property, $value, $forUpdate = false)
     {
         $query = array(
             $property => $value, //$this->checkPropertyValue($property, $value),
@@ -537,7 +537,7 @@ class Table
             $order[$value] = 1;
         }
 
-        return $this->find($query, $order);
+        return $this->find($query, $order, null, $forUpdate);
     }
 
     /**
@@ -546,9 +546,9 @@ class Table
      * @param mixed $value
      * @return Entity
      */
-    public function findOneBy($property, $value)
+    public function findOneBy($property, $value, $forUpdate = false)
     {
-        $res = $this->findBy($property, $value);
+        $res = $this->findBy($property, $value, $forUpdate);
         if (count($res) > 0)
         {
             return array_shift($res);
