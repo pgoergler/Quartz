@@ -103,8 +103,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
         if (!isset($class::$tableClassName) || is_null($class::$tableClassName))
         {
-            return preg_replace('#^Models\\\(.*?)\\\(.*?)$#i', 'Models\\\${1}\\\Table\\\${2}', $class) . 'Table';
-            //return str_replace('Models\\', 'Models\\Table\\', $class . 'Table');
+            return preg_replace('#^(.*)\\\(.*?)$#i', 'Models\\\${1}\\\Table\\\${2}', $class) . 'Table';
         }
         return $class::$tableClassName;
     }
