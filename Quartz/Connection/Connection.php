@@ -38,17 +38,17 @@ abstract class Connection
 
     public function begin()
     {
-        
+
     }
 
     public function commit()
     {
-        
+
     }
 
     public function rollback()
     {
-        
+
     }
 
     public abstract function isClosed();
@@ -70,6 +70,36 @@ abstract class Connection
     public abstract function delete(\Quartz\Object\Table $table, $query, $options = array());
 
     public abstract function convertClassType($type);
+
+    /**
+     * Escape the value
+     *
+     * @param mixed $value
+     * @param type $type
+     * @return mixed
+     */
+    public function escape($value, $type = 'string')
+    {
+        $converter = null;
+        switch( $type )
+        {
+            case 'integer':
+            case 'float':
+            case 'array':
+                return settype($value, $type);
+            case 'boolean':
+                return $value ? true : false;
+            case 'binary':
+                $converter = $this->getConverterFor('Binary');
+                break;
+        }
+
+        if( is_null($converter) )
+        {
+            $converter = $this->getConverterFor('String');
+        }
+        return $converter->toDb($value);
+    }
 
     /**
      * registerConverter
@@ -232,12 +262,12 @@ abstract class Connection
         );
     }
 
-    
+
     public function create(\Quartz\Object\Table $table)
     {
         throw new \RuntimeException('Not implemented yet.');
     }
-    
+
     public function drop(\Quartz\Object\Table $table, $cascade = false)
     {
         $query = 'DROP TABLE ' . $table->getName() . ( $cascade ? ' CASCADE' : '') . ';';

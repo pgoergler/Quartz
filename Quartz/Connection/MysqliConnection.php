@@ -124,9 +124,6 @@ class MysqliConnection extends Connection
     {
         $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
 
-        //Logger::getRootLogger()->trace($tableName);
-        //Logger::getRootLogger()->trace($criteria);
-
         $where = array();
         foreach ($criteria as $k => $v)
         {
@@ -254,7 +251,6 @@ class MysqliConnection extends Connection
 
         $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
 
-        //Logger::getRootLogger()->trace($where);
         $query = 'DELETE FROM ' . $tableName . ((count($where) > 0) ? ' WHERE ' . implode(' AND ', $where) : '' ) . ";";
         return $this->query($query);
     }
@@ -285,8 +281,6 @@ class MysqliConnection extends Connection
         {
             $this->connect();
         }
-
-        //\Ongoo\Logger\Logging::get()->trace($sQuery);
 
         $this->sLastQuery = $sQuery;
         $this->rLastQuery = \mysqli_query($this->mysqli, $sQuery);
