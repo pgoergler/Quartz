@@ -33,11 +33,10 @@ class Table
             $this->setDatabaseName(\Quartz\Quartz::getInstance()->getDatabaseName('default'));
         }
 
-        if( !is_null($orm) )
+        if (!is_null($orm))
         {
             $this->orm = $orm;
-        }
-        else
+        } else
         {
             $this->orm = \Quartz\Quartz::getInstance();
         }
@@ -179,7 +178,7 @@ class Table
 
     public function getColumn($field)
     {
-        if( $this->hasProperty($field))
+        if ($this->hasProperty($field))
         {
             return $this->properties[$field];
         }
@@ -451,33 +450,43 @@ class Table
     public function convertToDb($object)
     {
         $row = array();
-        foreach ($object as $property => $value)
+        try
         {
-            if (!$this->hasProperty($property))
+            foreach ($object as $property => $value)
             {
-                continue;
-            }
+                if (!$this->hasProperty($property))
+                {
+                    continue;
+                }
 
-            $type = $this->getPropertyType($property);
-            if (preg_match('#^([a-z0-9_\.-]+)$#i', $type, $matchs))
-            {
-                $type = $matchs[1];
-                $converter = $this->getConnection()->getConverterForType($type);
-            } else if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
-            {
-                $type = $matchs[1];
-                $converter = $this->getConnection()->getConverterFor('Array');
-            } else if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
-            {
-                $type = $matchs[1];
-                $converter = $this->getConnection()->getConverterForType($type);
-            } else
-            {
-                $converter = $this->getConnection()->getConverterForType($type);
-            }
+                $type = $this->getPropertyType($property);
+                if (preg_match('#^([a-z0-9_\.-]+)$#i', $type, $matchs))
+                {
+                    $type = $matchs[1];
+                    $converter = $this->getConnection()->getConverterForType($type);
+                } else if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
+                {
+                    $type = $matchs[1];
+                    $converter = $this->getConnection()->getConverterFor('Array');
+                } else if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
+                {
+                    $type = $matchs[1];
+                    $converter = $this->getConnection()->getConverterForType($type);
+                } else
+                {
+                    $converter = $this->getConnection()->getConverterForType($type);
+                }
 
-            $nvalue = $converter->toDb($value, $type);
-            $row[$property] = $nvalue;
+                $nvalue = $converter->toDb($value, $type);
+                $row[$property] = $nvalue;
+            }
+        } catch (\Exception $e)
+        {
+            if (isset($property))
+            {
+                throw new \Quartz\Exceptions\FieldFormatException($property, $value, $e->getMessage());
+            }
+            throw $e;
         }
         return $row;
     }
@@ -575,4 +584,5 @@ class Table
     {
         return $this->getConnection()->drop($this, $cascade);
     }
+
 }
