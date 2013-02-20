@@ -80,7 +80,6 @@ abstract class Connection
      */
     public function escape($value, $type = 'string')
     {
-        $converter = null;
         switch( $type )
         {
             case 'integer':
@@ -90,16 +89,16 @@ abstract class Connection
             case 'boolean':
                 return $value ? true : false;
             case 'binary':
-                $converter = $this->getConverterFor('Binary');
+                return $this->escapeBinary($value);
                 break;
+            default:
+                return $this->escapeString($value);
         }
-
-        if( is_null($converter) )
-        {
-            $converter = $this->getConverterFor('String');
-        }
-        return $converter->toDb($value);
     }
+
+    protected abstract function escapeBinary($value);
+
+    protected abstract function escapeString($value);
 
     /**
      * registerConverter

@@ -99,6 +99,16 @@ class MysqliConnection extends Connection
         }
     }
 
+    protected function escapeBinary($value)
+    {
+        return $value;
+    }
+
+    protected function escapeString($value)
+    {
+        return mysqli_real_escape_string($this->rConnect, $value);
+    }
+
     public function getSequence($table, $key, array $options = array())
     {
         throw new \RuntimeException('Not implemented yet.');

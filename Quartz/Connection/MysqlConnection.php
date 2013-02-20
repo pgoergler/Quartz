@@ -6,6 +6,7 @@ namespace Quartz\Connection;
  * Description of MysqlConnection
  *
  * @author paul
+ * @deprecated
  */
 class MysqlConnection extends Connection
 {
@@ -93,6 +94,16 @@ class MysqlConnection extends Connection
             default:
                 return $type;
         }
+    }
+
+    protected function escapeBinary($value)
+    {
+        return $value;
+    }
+
+    protected function escapeString($value)
+    {
+        return mysql_real_escape_string($value, $this->rConnect);
     }
 
     public function getSequence($table, $key, array $options = array())

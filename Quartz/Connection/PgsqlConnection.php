@@ -103,6 +103,16 @@ class PgsqlConnection extends Connection
         return $row['counter'];
     }
 
+    protected function escapeBinary($value)
+    {
+        return pg_escape_bytea($this->rConnect, $value);
+    }
+
+    protected function escapeString($value)
+    {
+        return pg_escape_string($this->rConnect, $value);
+    }
+
     public function command(array $options = array())
     {
         $query = isset($options['query']) ? $options['query'] : null;
