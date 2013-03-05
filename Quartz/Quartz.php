@@ -89,7 +89,7 @@ class Quartz
         return isset($this->instances[$className]);
     }
 
-    public function setConnection($name, Connection &$connetion)
+    public function setConnection($name, Connection\Connection &$connetion)
     {
         $this->connections[$name] = $connection;
     }
@@ -127,6 +127,14 @@ class Quartz
             {
                 throw new \InvalidArgumentException('No configuration found for database [' . $name . ']');
             }
+        }
+    }
+
+    public function closeAll()
+    {
+        foreach( $this->connections as $name => $conn)
+        {
+            $conn->close();
         }
     }
 
