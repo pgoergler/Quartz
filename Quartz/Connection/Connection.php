@@ -85,7 +85,8 @@ abstract class Connection
             case 'integer':
             case 'float':
             case 'array':
-                return settype($value, $type);
+                settype($value, $type);
+                return $value;
             case 'boolean':
                 return $value ? true : false;
             case 'binary':
