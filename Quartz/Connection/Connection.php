@@ -80,6 +80,11 @@ abstract class Connection
      */
     public function escape($value, $type = 'string')
     {
+        if( is_null($value) )
+        {
+            return $value;
+        }
+        
         switch( $type )
         {
             case 'integer':
