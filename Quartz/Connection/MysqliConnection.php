@@ -106,7 +106,7 @@ class MysqliConnection extends Connection
 
     protected function escapeString($value)
     {
-        return mysqli_real_escape_string($this->rConnect, $value);
+        return $this->mysqli->real_escape_string($value);
     }
 
     public function getSequence($table, $key, array $options = array())
