@@ -279,7 +279,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         if (is_null($objects))
         {
-            $this->setObjectRelation($relation, $object, false);
+            $this->setObjectRelation($relation, null, false);
             return $this;
         }
 
