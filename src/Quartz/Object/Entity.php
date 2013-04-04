@@ -25,11 +25,11 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         $this->className = get_called_class();
 
-        $values = $this->getTable($conn);
+        $table = $this->getTable($conn);
 
-        foreach ($this->getTable($conn)->getProperties() as $property)
+        foreach ($table->getProperties() as $property)
         {
-            $this->values[$property] = $this->getTable()->getDefaultValue($property);
+            $this->values[$property] = $table->getDefaultValue($property);
         }
     }
 
@@ -279,16 +279,14 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         if (is_null($objects))
         {
-            $this->setObjectRelation($relation, $object, false);
+            $this->setObjectRelation($relation, null, false);
             return $this;
         }
 
         if ($this->getTable()->hasManyRelation($relation))
         {
-            if (!isset($this->objectsPostSave[$relation]))
-            {
-                $this->objectsPostSave[$relation] = array();
-            }
+            $this->objectsPostSave[$relation] = array();
+            $this->objectsLinked[$relation] = array(); // reset linked objects
 
             $config = $this->getTable()->getManyRelation($relation);
             $class = $config['class'];
@@ -524,7 +522,10 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             {
                 $this->objectsLinked[$relation] = array();
             }
-            $this->objectsLinked[$relation][] = $object;
+            if( null !== $object )
+            {
+                $this->objectsLinked[$relation][] = $object;
+            }
         }
         return $this;
     }
