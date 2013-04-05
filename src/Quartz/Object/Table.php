@@ -20,7 +20,6 @@ class Table
     protected $hasOne = array();
     protected $hasMany = array();
     protected $hasAndBelongsToMany = array();
-    protected $nbTransaction = 0;
 
     public function __construct(\Quartz\Connection\Connection $conn = null, \Quartz\Quartz $orm = null)
     {
@@ -30,12 +29,12 @@ class Table
             $this->setDatabaseName($this->getConnection()->getDatabaseName());
         } else
         {
-            if (is_null($this->getConnection()))
+            if( is_null($this->getConnection()) )
             {
                 $this->setConnection(\Quartz\Quartz::getInstance()->getConnection('default'));
             }
 
-            if (is_null($this->getDatabaseName()))
+            if( is_null($this->getDatabaseName()) )
             {
                 $this->setDatabaseName(\Quartz\Quartz::getInstance()->getDatabaseName('default'));
             }
@@ -256,35 +255,26 @@ class Table
      */
     public function beginTransaction()
     {
-        if ($this->nbTransaction === 0)
-        {
-            $this->getConnection()->begin();
-        }
-        $this->nbTransaction++;
+        $this->getConnection()->begin();
         return $this;
     }
 
     /**
-     * Commit only if its the last commit
+     *
      * @return \Quartz\Object\Table
      */
     public function commit()
     {
-        $this->nbTransaction--;
-        if ($this->nbTransaction === 0)
-        {
-            $this->getConnection()->commit();
-        }
+        $this->getConnection()->commit();
         return $this;
     }
 
     /**
-     * Rollback immediatly
+     *
      * @return \Quartz\Object\Table
      */
     public function rollBack()
     {
-        $this->nbTransaction = 0;
         $this->getConnection()->rollback();
         return $this;
     }
@@ -524,9 +514,9 @@ class Table
         $className = $this->getObjectClassName();
 
         return array_map(function($item) use($self, $className)
-                {
-                    return $self->convertFromDb($item);
-                }, $res);
+                        {
+                            return $self->convertFromDb($item);
+                        }, $res);
     }
 
     /**
