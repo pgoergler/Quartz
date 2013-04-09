@@ -29,12 +29,12 @@ class Table
             $this->setDatabaseName($this->getConnection()->getDatabaseName());
         } else
         {
-            if( is_null($this->getConnection()) )
+            if (is_null($this->getConnection()))
             {
                 $this->setConnection(\Quartz\Quartz::getInstance()->getConnection('default'));
             }
 
-            if( is_null($this->getDatabaseName()) )
+            if (is_null($this->getDatabaseName()))
             {
                 $this->setDatabaseName(\Quartz\Quartz::getInstance()->getDatabaseName('default'));
             }
@@ -514,9 +514,9 @@ class Table
         $className = $this->getObjectClassName();
 
         return array_map(function($item) use($self, $className)
-                        {
-                            return $self->convertFromDb($item);
-                        }, $res);
+                {
+                    return $self->convertFromDb($item);
+                }, $res);
     }
 
     /**
@@ -543,7 +543,7 @@ class Table
     public function findBy($property, $value, $forUpdate = false)
     {
         $query = array(
-            $property => $this->escape($value), //$this->checkPropertyValue($property, $value),
+            $property => $this->escape($value),
         );
 
         $primary = $this->getPrimaryKeys();
