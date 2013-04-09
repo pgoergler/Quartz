@@ -262,17 +262,17 @@ class MysqlConnection extends Connection
         return $this->query($query);
     }
 
-    public function begin()
+    protected function __begin()
     {
         return $this->query('START TRANSACTION;');
     }
 
-    public function commit()
+    protected function __commit()
     {
         return $this->query('COMMIT;');
     }
 
-    public function rollback()
+    protected function __rollback()
     {
         return $this->query('ROLLBACK;');
     }

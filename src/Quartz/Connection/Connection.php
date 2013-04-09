@@ -17,6 +17,7 @@ abstract class Connection
     protected $extra = array();
     protected $converters = array();
     protected $allowedTypes = array();
+    protected $nbTransaction = 0;
 
     public function __construct($hostname, $user, $password, $dbname, $extra = array())
     {
@@ -38,18 +39,33 @@ abstract class Connection
 
     public function begin()
     {
-
+        if ($this->nbTransaction === 0)
+        {
+            $this->__begin();
+        }
+        $this->nbTransaction++;
     }
 
     public function commit()
     {
-
+        $this->nbTransaction--;
+        if ($this->nbTransaction === 0)
+        {
+            $this->__commit();
+        }
     }
 
     public function rollback()
     {
-
+        $this->nbTransaction = 0;
+        $this->__rollback();
     }
+
+    protected abstract function __begin();
+
+    protected abstract function __commit();
+
+    protected abstract function __rollback();
 
     public abstract function isClosed();
 
@@ -84,7 +100,7 @@ abstract class Connection
         {
             return $value;
         }
-        
+
         switch( $type )
         {
             case 'integer':
