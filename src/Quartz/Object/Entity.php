@@ -257,7 +257,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $class = $config['class'];
             if (!$object instanceof $class)
             {
-                throw new \RuntimeException('In ' . $this->getTable()->getName() . ' manyRelation ' . $relation . ' must be set with ' . $class . ' and not with ' . get_class($object));
+                throw new \RuntimeException('In ' . $this->getTable()->getName() . ' manyRelation ' . $relation . ' must be set with ' . $class . ' and not with ' . (is_object($object)? get_class($object) : gettype($object)) );
             }
 
             $this->objectsPreSave[$relation][0] = $object;
@@ -494,13 +494,17 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $this->set($local, $value);
         } else if ($this->getTable()->hasManyRelation($relation))
         {
-            $config = $this->getTable()->getManyRelation($relation);
+            if( null === $object )
+            {
+                return $this;
+            }
 
+            $config = $this->getTable()->getManyRelation($relation);
             $local = $config['local'];
             $foreign = $config['foreign'];
             $class = $config['class'];
-            $value = is_null($object) ? null : $object->get($local);
-            $this->set($foreign, $value);
+            $value = $this->get($local);
+            $object->set($foreign, $value);
         }
         return $this;
     }
