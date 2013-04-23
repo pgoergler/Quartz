@@ -291,7 +291,7 @@ abstract class Connection
 
     public function drop(\Quartz\Object\Table $table, $cascade = false)
     {
-        $query = 'DROP TABLE ' . $table->getName() . ( $cascade ? ' CASCADE' : '') . ';';
+        $query = 'DROP TABLE IF EXISTS ' . $table->getName() . ( $cascade ? ' CASCADE' : '') . ';';
         return $this->query($query);
     }
 }
