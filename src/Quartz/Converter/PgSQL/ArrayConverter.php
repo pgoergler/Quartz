@@ -23,7 +23,7 @@ class ArrayConverter implements \Quartz\Converter\ConverterInterface
 
     public function fromDb($data, $type = null)
     {
-        if ($data == 'NULL')
+        if ($data === null || $data == 'NULL')
         {
             return null;
         }
@@ -37,10 +37,10 @@ class ArrayConverter implements \Quartz\Converter\ConverterInterface
         {
             $converter = $this->connection->getConverterForType($type);
 
-            return array_map(function($val) use ($converter, $type)
+            return array_map(function($val) use (&$converter, $type)
                             {
                                 return $val !== "NULL" ? $converter->fromDb(str_replace('\\"', '"', $val), $type) : null;
-                            }, str_getcsv(str_replace('""', '"', trim($data, "{}"))));
+                            }, str_getcsv(str_replace('\\\\', '\\', trim($data, "{}"))));
         } else
         {
             return array();

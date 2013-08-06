@@ -12,7 +12,7 @@ class PgsqlConnection extends Connection
 
     public function configure()
     {
-        $this->registerConverter('Array', new \Quartz\Converter\PgSQL\ArrayConverter($this), array());
+        $this->registerConverter('Array', new \Quartz\Converter\PgSQL\ArrayConverter($this), array('array'));
         $this->registerConverter('Json', new \Quartz\Converter\PgSQL\JsonConverter(), array('json'));
         $this->registerConverter('Boolean', new \Quartz\Converter\PgSQL\BooleanConverter(), array('bool', 'boolean'));
         $this->registerConverter('Number', new \Quartz\Converter\PgSQL\NumberConverter(), array('int2', 'int4', 'int8', 'numeric', 'float4', 'float8', 'integer', 'sequence'));
