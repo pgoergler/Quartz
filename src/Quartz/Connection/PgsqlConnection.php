@@ -19,7 +19,7 @@ class PgsqlConnection extends Connection
         $this->registerConverter('String', new \Quartz\Converter\PgSQL\StringConverter(), array('varchar', 'char', 'text', 'uuid', 'tsvector', 'xml', 'bpchar', 'string', 'enum'));
         $this->registerConverter('Timestamp', new \Quartz\Converter\PgSQL\TimestampConverter(), array('timestamp', 'date', 'time', 'datetime', 'unixtime'));
         $this->registerConverter('HStore', new \Quartz\Converter\PgSQL\HStoreConverter(), array('hstore'));
-        //$this->registerConverter('Interval', new Converter\PgInterval(), array('interval'));
+        $this->registerConverter('Interval', new \Quartz\Converter\PgSQL\IntervalConverter(), array('interval'));
         //$this->registerConverter('Binary', new Converter\PgBytea(), array('bytea'));
     }
 
@@ -48,7 +48,7 @@ class PgsqlConnection extends Connection
             $this->isPersistant = true;
         } else
         {
-            $this->rConnect = @pg_pconnect($connect, PGSQL_CONNECT_FORCE_NEW);
+            $this->rConnect = @pg_connect($connect, PGSQL_CONNECT_FORCE_NEW);
         }
 
         if (!$this->rConnect)
@@ -62,8 +62,11 @@ class PgsqlConnection extends Connection
     public function close()
     {
         $this->closed = true;
-        if (!$this->isPersistant)
+        if (!$this->isPersistant && $this->rConnect)
+        {
             @pg_close($this->rConnect);
+            $this->rConnect = null;
+        }
     }
 
     public function isClosed()

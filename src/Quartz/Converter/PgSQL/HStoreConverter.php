@@ -52,14 +52,14 @@ class HStoreConverter implements \Quartz\Converter\ConverterInterface
                 $insert_values[] = sprintf('"%s" => NULL', $key);
             } elseif (is_array($value))
             {
-                $insert_values[] = sprintf('"%s" => "%s"', $key, str_replace("'", "''", str_replace('"', '\\"', json_encode($value))));
+                $insert_values[] = sprintf('"%s" => "%s"',  addcslashes($key, '\"'), addcslashes(json_encode($value), '\"'));
             } else
             {
-                $insert_values[] = sprintf('"%s" => "%s"', $key, str_replace("'", "''", str_replace('"', '\\"', $value)));
+                $insert_values[] = sprintf('"%s" => "%s"',  addcslashes($key, '\"'), addcslashes($value, '\"'));
             }
         }
 
-        return sprintf("'%s'::hstore", join(', ', $insert_values));
+        return sprintf("%s(\$hst\$%s\$hst\$)", $type, join(', ', $insert_values));
     }
 
     public function translate($type)
