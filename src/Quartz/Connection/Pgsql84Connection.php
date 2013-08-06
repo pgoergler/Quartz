@@ -6,7 +6,7 @@ class Pgsql84Connection extends PgsqlConnection
 {
     public function configure()
     {
-        $this->registerConverter('Array', new \Quartz\Converter\PgSQL84\ArrayConverter($this), array());
+        $this->registerConverter('Array', new \Quartz\Converter\PgSQL84\ArrayConverter($this), array('array'));
         $this->registerConverter('Json', new \Quartz\Converter\PgSQL84\JsonConverter(), array('json'));
         $this->registerConverter('Boolean', new \Quartz\Converter\PgSQL84\BooleanConverter(), array('bool', 'boolean'));
         $this->registerConverter('Number', new \Quartz\Converter\PgSQL84\NumberConverter(), array('int2', 'int4', 'int8', 'numeric', 'float4', 'float8', 'integer', 'sequence'));
