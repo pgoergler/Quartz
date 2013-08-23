@@ -401,19 +401,20 @@ class PgsqlConnection extends Connection
             $converter = null;
             $isArray = false;
 
+            $fieldType = $type;
             if (preg_match('#^([a-z0-9_\.-]+)$#i', $type, $matchs))
             {
-                $type = $matchs[1];
+                $fieldType = $matchs[1];
             } else if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
             {
-                $type = $matchs[1];
+                $fieldType = $matchs[1];
                 $isArray = $matchs[2];
             } else if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
             {
-                $type = $matchs[1];
+                $fieldType = $matchs[1];
             }
 
-            $converter = $this->getConverterForType($type);
+            $converter = $this->getConverterForType($fieldType);
 
             $sqlType = $converter->translate($type) . ( $isArray !== false ? "[$isArray]" : '');
             $notNull = $configuration['notnull'] ? 'NOT NULL' : '';

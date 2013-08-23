@@ -66,7 +66,6 @@ class NumberConverter implements \Quartz\Converter\ConverterInterface
 
     public function translate($type)
     {
-
         switch ($type)
         {
             case 'smallint':
@@ -76,13 +75,6 @@ class NumberConverter implements \Quartz\Converter\ConverterInterface
             case 'bigint':
             case 'int8':
                 return 'bigint';
-
-            case 'numeric':
-                if (!preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
-                {
-                    return 'integer';
-                }
-                return 'numeric(' . $matchs[2] . ')';
 
             case 'real':
             case 'float4':
@@ -98,6 +90,10 @@ class NumberConverter implements \Quartz\Converter\ConverterInterface
                 return 'bigserial';
 
             default:
+                if (preg_match('#^(numeric|decimal)\(([0-9]+(,[0-9]+))\)$#i', $type, $matchs))
+                {
+                    return 'numeric(' . $matchs[2] . ')';
+                }
                 return 'integer';
         }
     }
