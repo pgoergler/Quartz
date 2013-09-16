@@ -3,7 +3,7 @@
     "type": "library",
     "description":  "Simple ORM",
     "keywords": ["orm", "postgresql", "mysql", "database"],
-    "homepage": "http://",
+    "homepage": "https://github.com/pgoergler/Quartz",
     "license":  "MIT",
     "authors":  [ { "name": "Paul GOERGLER", "email": "pgoergler@gmail.com", "homepage": "http://soft.wayr.fr" } ],
     "require": { "php": ">=5.3.0" },
