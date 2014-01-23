@@ -22,7 +22,7 @@ class IntervalConverter implements \Quartz\Converter\ConverterInterface
             return new \DateInterval($data);
         }
 
-        if (preg_match("/(?:([0-9]+) years ?)?(?:([0-9]+) mons ?)?(?:([0-9]+) days ?)?(?:([0-9]{1,2}):([0-9]{1,2}):([0-9]+))?/", $data, $matchs))
+        if (preg_match("/(?:([0-9]+) years? ?)?(?:([0-9]+) mons? ?)?(?:([0-9]+) days? ?)?(?:([0-9]{1,2}):([0-9]{1,2}):([0-9]+))?/", $data, $matchs))
         {
             return \DateInterval::createFromDateString(
                 sprintf("%d years %d months %d days %d hours %d minutes %d seconds",
