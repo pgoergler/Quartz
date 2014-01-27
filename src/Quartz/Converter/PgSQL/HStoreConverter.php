@@ -53,6 +53,9 @@ class HStoreConverter implements \Quartz\Converter\ConverterInterface
             } elseif (is_array($value))
             {
                 $insert_values[] = sprintf('"%s" => "%s"',  addcslashes($key, '\"'), addcslashes(json_encode($value), '\"'));
+            } elseif (is_object($value))
+            {
+                $insert_values[] = sprintf('"%s" => "%s"',  addcslashes($key, '\"'), addcslashes(json_encode($value), '\"'));
             } else
             {
                 $insert_values[] = sprintf('"%s" => "%s"',  addcslashes($key, '\"'), addcslashes($value, '\"'));
