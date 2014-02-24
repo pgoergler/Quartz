@@ -152,7 +152,11 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     public function set($property, $value)
     {
         $property = $this->getTable()->getRealPropertyName($property);
-        if ($value !== $this->values[$property])
+
+        $newValue = $this->getTable()->convertPropertyValueToDb($property, $value);
+        $oldValue = $this->getTable()->convertPropertyValueToDb($property, $this->values[$property]);
+
+        if ($newValue !== $oldValue)
         {
             $this->oldValues[$property] = $this->values[$property];
             $this->values[$property] = $value;

@@ -454,6 +454,29 @@ class Table
         return $obj;
     }
 
+    public function convertPropertyValueToDb($property, $value)
+    {
+        $type = $this->getPropertyType($property);
+        if (preg_match('#^([a-z0-9_\.-]+)$#i', $type, $matchs))
+        {
+            $type = $matchs[1];
+            $converter = $this->getConnection()->getConverterForType($type);
+        } else if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
+        {
+            $type = $matchs[1];
+            $converter = $this->getConnection()->getConverterFor('Array');
+        } else if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
+        {
+            $type = $matchs[1];
+            $converter = $this->getConnection()->getConverterForType($type);
+        } else
+        {
+            $converter = $this->getConnection()->getConverterForType($type);
+        }
+
+        return $converter->toDb($value, $type);
+    }
+
     public function convertToDb($object)
     {
         $row = array();
@@ -465,32 +488,14 @@ class Table
                 {
                     continue;
                 }
-
-                $type = $this->getPropertyType($property);
-                if (preg_match('#^([a-z0-9_\.-]+)$#i', $type, $matchs))
-                {
-                    $type = $matchs[1];
-                    $converter = $this->getConnection()->getConverterForType($type);
-                } else if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
-                {
-                    $type = $matchs[1];
-                    $converter = $this->getConnection()->getConverterFor('Array');
-                } else if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
-                {
-                    $type = $matchs[1];
-                    $converter = $this->getConnection()->getConverterForType($type);
-                } else
-                {
-                    $converter = $this->getConnection()->getConverterForType($type);
-                }
-
-                $nvalue = $converter->toDb($value, $type);
-                $row[$property] = $nvalue;
+                $row[$property] = $this->convertPropertyValueToDb($property, $value);
             }
         } catch (\Exception $e)
         {
+            \Logging\LoggersManager::getInstance()->get()->debug($e);
             if (isset($property))
             {
+                \Logging\LoggersManager::getInstance()->get()->debug($object instanceof Entity ? $object->toArray(): $object);
                 throw new \Quartz\Exceptions\FieldFormatException($property, $value, $e->getMessage());
             }
             throw $e;
