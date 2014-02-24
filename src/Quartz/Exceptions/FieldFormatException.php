@@ -17,7 +17,7 @@ class FieldFormatException extends \InvalidArgumentException
     {
         $this->field = $field;
         $this->value = $value;
-        parent::__construct($message);
+        parent::__construct("field:$field, value: $value, $message");
     }
 
     public function getField()
