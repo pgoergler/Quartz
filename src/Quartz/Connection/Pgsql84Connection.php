@@ -14,6 +14,6 @@ class Pgsql84Connection extends PgsqlConnection
         $this->registerConverter('Timestamp', new \Quartz\Converter\PgSQL84\TimestampConverter(), array('timestamp', 'date', 'time', 'datetime', 'unixtime'));
         $this->registerConverter('HStore', new \Quartz\Converter\PgSQL84\HStoreConverter(), array('hstore'));
         $this->registerConverter('Interval', new \Quartz\Converter\PgSQL84\IntervalConverter(), array('interval'));
-        //$this->registerConverter('Binary', new Converter\PgBytea(), array('bytea'));
+        $this->registerConverter('Binary', new \Quartz\Converter\PgSQL84\ByteaConverter(), array('binary', 'bytea'));
     }
 }

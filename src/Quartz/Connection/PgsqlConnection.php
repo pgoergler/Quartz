@@ -20,7 +20,7 @@ class PgsqlConnection extends Connection
         $this->registerConverter('Timestamp', new \Quartz\Converter\PgSQL\TimestampConverter(), array('timestamp', 'date', 'time', 'datetime', 'unixtime'));
         $this->registerConverter('HStore', new \Quartz\Converter\PgSQL\HStoreConverter(), array('hstore'));
         $this->registerConverter('Interval', new \Quartz\Converter\PgSQL\IntervalConverter(), array('interval'));
-        //$this->registerConverter('Binary', new Converter\PgBytea(), array('bytea'));
+        $this->registerConverter('Binary', new \Quartz\Converter\PgSQL\ByteaConverter(), array('binary', 'bytea'));
     }
 
     public function connect()
