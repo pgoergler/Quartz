@@ -97,7 +97,36 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         return $this->valuesUpdated;
     }
+    
+    /**
+     *
+     * @return array
+     */
+    public function getPreviousValues()
+    {
+        return $this->oldValues;
+    }
 
+    /**
+     * 
+     * @param string $property
+     * @return boolean
+     */
+    public function hasPropertyChanged($property)
+    {
+        return array_key_exists($property, $this->valuesUpdated);
+    }
+    
+    /**
+     * 
+     * @param string $property
+     * @return mixed
+     */
+    public function getPreviousValue($property)
+    {
+        return array_key_exists($property, $this->oldValues) ? $this->oldValues[$property] : null;
+    }
+    
     /**
      *
      * @return string
