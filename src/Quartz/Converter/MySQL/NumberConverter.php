@@ -46,7 +46,7 @@ class NumberConverter implements \Quartz\Converter\ConverterInterface
 
         if (is_numeric($data))
         {
-            $data += 0; // force type juggling
+            $data = str_replace(',', '.', $data) + 0; // force type juggling
             if (is_double($data))
             {
                 return doubleval($data);
