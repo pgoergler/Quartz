@@ -27,6 +27,11 @@ class ArrayConverter implements \Quartz\Converter\ConverterInterface
         {
             return null;
         }
+        
+        if (preg_match('#^ARRAY\[\]::.*$#', $data))
+        {
+            return array();
+        }
 
         if (is_null($type))
         {

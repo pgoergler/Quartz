@@ -27,6 +27,11 @@ class ArrayConverter implements \Quartz\Converter\ConverterInterface
         {
             return null;
         }
+        
+        if (preg_match('#^ARRAY\[\]::.*$#', $data))
+        {
+            return array();
+        }
 
         if (is_null($type))
         {
@@ -36,11 +41,9 @@ class ArrayConverter implements \Quartz\Converter\ConverterInterface
         if ($data !== "{NULL}" and $data !== "{}")
         {
             $converter = $this->connection->getConverterForType($type);
-
-            return array_map(function($val) use (&$converter, $type)
-                            {
-                                return $val !== "NULL" ? $converter->fromDb(str_replace('\\"', '"', $val), $type) : null;
-                            }, str_getcsv(str_replace('\\\\', '\\', trim($data, "{}"))));
+            return array_map(function($val) use ($converter, $type) {
+                return $val !== "NULL" ? $converter->fromDb(str_replace(array('\\\\', '\\"'), array('\\', '"'), $val), $type) : null;
+            }, str_getcsv(trim($data, "{}")));
         } else
         {
             return array();
