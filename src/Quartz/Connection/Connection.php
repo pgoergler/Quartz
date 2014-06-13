@@ -100,14 +100,28 @@ abstract class Connection
         {
             return $value;
         }
+        
+        $arrayType = null;
+        if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
+        {
+            $type = 'array';
+            $arrayType = $matchs[1];
+        }
 
         switch( $type )
         {
+            case 'sequence':
+                settype($value, 'integer');
+                return $value;
             case 'integer':
             case 'float':
-            case 'array':
                 settype($value, $type);
                 return $value;
+            case 'array':
+                $self = &$this;
+                return array_map(function($item) use(&$self, $arrayType) {
+                    return $self->escape($item, $arrayType);
+                }, $value);
             case 'boolean':
                 return $value ? true : false;
             case 'binary':

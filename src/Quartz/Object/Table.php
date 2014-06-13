@@ -548,7 +548,7 @@ class Table
     public function findBy($property, $value, $forUpdate = false)
     {
         $query = array(
-            $property => $this->escape($value),
+            $property => $this->escapeProperty($property, $value),
         );
 
         $primary = $this->getPrimaryKeys();
@@ -582,6 +582,12 @@ class Table
         return $this->getConnection()->delete($this, $criteria, $options);
     }
 
+    public function escapeProperty($property, $value)
+    {
+        $type = $this->getPropertyType($property);
+        return $this->getConnection()->escape($value, $type);
+    }
+    
     public function escape($value, $type = 'string')
     {
         return $this->getConnection()->escape($value, $type);
