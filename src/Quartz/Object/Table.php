@@ -114,7 +114,7 @@ class Table
         $this->objectClassName = $className;
     }
 
-    public function getObjectClassName()
+    public function getObjectClassName($values = array())
     {
         return $this->objectClassName;
     }
@@ -139,6 +139,7 @@ class Table
             'value' => $defaultValue,
             'notnull' => ($notnull) ? true : false,
             'primary' => false,
+            'unique' => false,
         );
 
         switch ($type)
@@ -152,6 +153,11 @@ class Table
         {
             $conf['primary'] = true;
             $this->addPrimaryKey($property);
+        }
+        
+        if (isset($options['unique']) && $options['unique'] === true)
+        {
+            $conf['unique'] = true;
         }
 
         $this->properties[$property] = $conf;
@@ -417,8 +423,6 @@ class Table
             return null;
         }
 
-        $className = $this->getObjectClassName();
-        $obj = new $className();
         $values = array();
 
         foreach ($this->getProperties() as $property)
@@ -449,6 +453,9 @@ class Table
                 $values[$property] = $nvalue;
             }
         }
+        
+        $className = $this->getObjectClassName($values);
+        $obj = new $className();
         $obj->hydrate($values);
         $obj->setNew(false);
         return $obj;

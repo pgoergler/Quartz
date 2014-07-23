@@ -92,6 +92,8 @@ class PgsqlConnection extends Connection
         {
             case 'string':
                 return 'varchar' . $extra;
+            case 'integer':
+                return 'integer' . $extra;
             default:
                 return $type;
         }
@@ -208,14 +210,13 @@ class PgsqlConnection extends Connection
 
     public function insert(\Quartz\Object\Table $table, $object)
     {
-        if ($object instanceof \Quartz\Object\Entity)
+        $query = "INSERT INTO %s ( %s ) VALUES (%s) RETURNING %s";
+        $fields = implode(', ', array_map(array($this, 'escapeFieldName'), array_keys($object)));
+        $res = $this->query(sprintf($query, $table->getName(), $fields, implode(",", $object), $fields));
+        if( $res )
         {
-            //$object = $object->toArray();
+            return $this->farray($res);
         }
-
-        $query = 'INSERT INTO ' . $table->getName() . ' (' . implode(', ', array_map(array($this, 'escapeFieldName'), array_keys($object))) . ') VALUES (' . implode(",", $object) . ");";
-        $this->query($query);
-
         return $object;
     }
 
@@ -395,6 +396,8 @@ class PgsqlConnection extends Connection
         $constraints = array();
         $primaries = array();
 
+        $tableSlugname = preg_replace('#^(.*?\.)(.*?)$#', '$2', $table->getName());
+        
         foreach ($table->getColumns() as $columnName => $configuration)
         {
             $type = strtolower($table->getPropertyType($columnName));
@@ -425,6 +428,11 @@ class PgsqlConnection extends Connection
             if ($configuration['primary'])
             {
                 $primaries[] = $this->escapeFieldName($columnName);
+            }
+            
+            if ($configuration['unique'])
+            {
+                $constraints[] = 'CONSTRAINT ' . $this->escapeFieldName($tableSlugname . '_' . $columnName. '_ukey') .' UNIQUE (' . $this->escapeFieldName($columnName) . ')';
             }
         }
 

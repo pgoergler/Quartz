@@ -59,6 +59,6 @@ class JsonConverter implements \Quartz\Converter\ConverterInterface
 
     public function translate($type)
     {
-        return 'text';
+        return 'json';
     }
 }
