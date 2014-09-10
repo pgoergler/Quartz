@@ -34,11 +34,27 @@ class JsonConverter implements \Quartz\Converter\ConverterInterface
 
     public function toDb($data, $type = null)
     {
-        $data = pg_escape_string(json_encode($data));
-        $type = is_null($type) ? '' : sprintf("%s ", $type);
-        $data = sprintf("%s'%s'",  $type, $data);
+        if (is_null($type))
+        {
+            throw new \InvalidArgumentException(sprintf('Json converter must be given a type.'));
+        }
+        if (!is_array($data))
+        {
+            if (is_null($data))
+            {
+                return 'NULL';
+            } else
+            {
+                $json = json_encode($data);
+                if ($json !== false)
+                {
+                    return $json;
+                }
+            }
 
-        return $data;
+            throw new \InvalidArgumentException(sprintf("Json converter toDb() data must be an array ('%s' given).", gettype($data)));
+        }
+        return "'" . preg_replace("#'#", "\\'", json_encode($data)) . "'";
     }
 
     public function translate($type)
