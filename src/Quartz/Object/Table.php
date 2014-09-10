@@ -48,7 +48,7 @@ class Table
             $this->orm = \Quartz\Quartz::getInstance();
         }
     }
-
+    
     /**
      *
      * @param \Quartz\Quartz $orm
@@ -449,7 +449,7 @@ class Table
                 {
                     $converter = $this->getConnection()->getConverterForType($type);
                 }
-                $nvalue = $converter->fromDb($object[$property], $matchs[1]);
+                $nvalue = $converter->fromDb($object[$property], $type);
                 $values[$property] = $nvalue;
             }
         }
