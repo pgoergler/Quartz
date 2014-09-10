@@ -275,6 +275,21 @@ class PgsqlConnection extends Connection
     {
         return $this->query('BEGIN TRANSACTION;');
     }
+    
+    public function __savepoint($savepoint)
+    {
+        return $this->query("SAVEPOINT $savepoint;");
+    }
+    
+    public function __commitSavepoint($savepoint)
+    {
+        return $this->query("RELEASE SAVEPOINT $savepoint;");
+    }
+    
+    public function __rollbackSavepoint($savepoint)
+    {
+        return $this->query("ROLLBACK TO SAVEPOINT $savepoint;");
+    }
 
     protected function __commit()
     {

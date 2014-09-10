@@ -18,6 +18,8 @@ abstract class Connection
     protected $converters = array();
     protected $allowedTypes = array();
     protected $nbTransaction = 0;
+    protected $transactions = array();
+
 
     public function __construct($hostname, $user, $password, $dbname, $extra = array())
     {
@@ -39,28 +41,54 @@ abstract class Connection
 
     public function begin()
     {
-        if ($this->nbTransaction === 0)
+        if( empty($this->transactions) )
         {
-            $this->__begin();
+            $this->transactions[] = 'main';
+            return $this->__begin();
         }
-        $this->nbTransaction++;
+        else
+        {
+            $savepoint = uniqid("transaction_");
+            $this->transactions[] = $savepoint;
+            return $this->__savepoint($savepoint);
+        }
     }
 
     public function commit()
     {
-        $this->nbTransaction--;
-        if ($this->nbTransaction === 0)
+        $savepoint = array_pop($this->transactions);
+        if( $savepoint === 'main' )
         {
-            $this->__commit();
+            return $this->__commit();
+        }
+        else
+        {
+            return $this->__commitSavepoint($savepoint);
         }
     }
 
-    public function rollback()
+    public function rollback($force = false)
     {
-        $this->nbTransaction = 0;
-        $this->__rollback();
+        $savepoint = array_pop($this->transactions);
+        if( $savepoint === 'main' || $force)
+        {
+            $this->transactions = array();
+            return $this->__rollback();
+        }
+        else
+        {
+            return $this->__rollbackSavepoint($savepoint);
+        }
     }
 
+    public abstract function free($resource);
+    
+    protected abstract function __savepoint($savepoint);
+    
+    protected abstract function __commitSavepoint($savepoint);
+    
+    protected abstract function __rollbackSavepoint($savepoint);
+    
     protected abstract function __begin();
 
     protected abstract function __commit();
