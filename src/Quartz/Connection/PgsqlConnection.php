@@ -18,6 +18,7 @@ class PgsqlConnection extends Connection
         $this->registerConverter('Number', new \Quartz\Converter\PgSQL\NumberConverter(), array('int2', 'int4', 'int8', 'numeric', 'float4', 'float8', 'integer', 'sequence'));
         $this->registerConverter('String', new \Quartz\Converter\PgSQL\StringConverter(), array('varchar', 'char', 'text', 'uuid', 'tsvector', 'xml', 'bpchar', 'string', 'enum'));
         $this->registerConverter('Timestamp', new \Quartz\Converter\PgSQL\TimestampConverter(), array('timestamp', 'date', 'time', 'datetime', 'unixtime'));
+        $this->registerConverter('TimestampTZ', new \Quartz\Converter\PgSQL\TimestampWithTimezoneConverter(), array('timestamptz', 'timestamp with time zone', 'timestamp with timezone'));
         $this->registerConverter('HStore', new \Quartz\Converter\PgSQL\HStoreConverter(), array('hstore'));
         $this->registerConverter('Interval', new \Quartz\Converter\PgSQL\IntervalConverter(), array('interval'));
         $this->registerConverter('Binary', new \Quartz\Converter\PgSQL\ByteaConverter(), array('binary', 'bytea'));
