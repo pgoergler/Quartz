@@ -7,7 +7,7 @@ namespace Quartz\Converter\PgSQL;
  *
  * @author paul
  */
-class HStoreConverter implements \Quartz\Converter\ConverterInterface
+class HStoreConverter implements \Quartz\Converter\Converter
 {
 
     public function fromDb($data, $type = null)

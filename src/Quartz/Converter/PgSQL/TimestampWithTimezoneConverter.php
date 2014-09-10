@@ -7,7 +7,7 @@ namespace Quartz\Converter\PgSQL;
  *
  * @author paul
  */
-class TimestampWithTimezoneConverter implements \Quartz\Converter\ConverterInterface
+class TimestampWithTimezoneConverter implements \Quartz\Converter\Converter
 {
 
     public function fromDb($data, $type = null)

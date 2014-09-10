@@ -7,7 +7,7 @@ namespace Quartz\Converter\PgSQL;
  *
  * @author paul
  */
-class IntervalConverter implements \Quartz\Converter\ConverterInterface
+class IntervalConverter implements \Quartz\Converter\Converter
 {
 
     public function fromDb($data, $type = null)

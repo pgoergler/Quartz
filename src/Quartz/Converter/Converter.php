@@ -3,11 +3,11 @@
 namespace Quartz\Converter;
 
 /**
- * Description of ConverterInterface
+ * Description of Converter
  *
  * @author paul
  */
-interface ConverterInterface
+interface Converter
 {
     /**
      * fromDb

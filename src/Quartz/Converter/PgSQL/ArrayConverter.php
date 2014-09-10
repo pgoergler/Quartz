@@ -7,7 +7,7 @@ namespace Quartz\Converter\PgSQL;
  *
  * @author paul
  */
-class ArrayConverter implements \Quartz\Converter\ConverterInterface
+class ArrayConverter implements \Quartz\Converter\Converter
 {
 
     protected $connection;
