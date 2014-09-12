@@ -7,7 +7,7 @@ namespace Quartz\Converter\PgSQL;
  *
  * @author paul
  */
-class NumberConverter implements \Quartz\Converter\ConverterInterface
+class NumberConverter implements \Quartz\Converter\Converter
 {
 
     public function fromDb($data, $type = null)

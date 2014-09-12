@@ -48,13 +48,13 @@ class Table
             $this->orm = \Quartz\Quartz::getInstance();
         }
     }
-    
+
     /**
      *
      * @param \Quartz\Quartz $orm
      * @return \Quartz\Object\Table
      */
-    public function setORM(\Quartz\Quartz $orm)
+    public function setOrm(\Quartz\Quartz $orm)
     {
         $this->orm = $orm;
         return $this;
@@ -64,7 +64,7 @@ class Table
      *
      * @return \Quartz\Quartz
      */
-    public function getORM()
+    public function getOrm()
     {
         return $this->orm;
     }
@@ -114,7 +114,7 @@ class Table
         $this->objectClassName = $className;
     }
 
-    public function getObjectClassName($values = array())
+    public function getObjectClassName()
     {
         return $this->objectClassName;
     }
@@ -135,7 +135,7 @@ class Table
     public function addColumn($property, $type, $defaultValue, $notnull = true, $options = array())
     {
         $conf = array(
-            'type' => $this->getConnection()->convertClassType(strtolower($type)),
+            'type' => $this->getConnection()->convertType($type),
             'value' => $defaultValue,
             'notnull' => ($notnull) ? true : false,
             'primary' => false,
@@ -154,7 +154,7 @@ class Table
             $conf['primary'] = true;
             $this->addPrimaryKey($property);
         }
-        
+
         if (isset($options['unique']) && $options['unique'] === true)
         {
             $conf['unique'] = true;
@@ -181,7 +181,7 @@ class Table
                 return $p;
             }
         }
-        throw new \Quartz\Exceptions\NotExistsException('In ' . $this->getObjectClassName() . ' [' . $property . '] property');
+        throw new \Quartz\Exception\NotExistsException('In ' . $this->getObjectClassName() . ' [' . $property . '] property');
     }
 
     public function getColumns()
@@ -223,7 +223,7 @@ class Table
         {
             return $this->properties[$property]['values'];
         }
-        throw new \Quartz\Exceptions\NotExistsException('In ' . $this->getName() . ' ' . $property . ' property');
+        throw new \Quartz\Exception\NotExistsException('In ' . $this->getName() . ' ' . $property . ' property');
     }
 
     public function getDefaultValue($property)
@@ -238,7 +238,7 @@ class Table
 
             return $value;
         }
-        throw new \Quartz\Exceptions\NotExistsException('In ' . $this->name . ' ' . $property . ' property');
+        throw new \Quartz\Exception\NotExistsException('In ' . $this->name . ' ' . $property . ' property');
     }
 
     /**
@@ -361,7 +361,7 @@ class Table
      *
      * @param string $className
      * @return array
-     * @throws \Quartz\Exceptions\NotExistsException
+     * @throws \Quartz\Exception\NotExistsException
      */
     public function getOneRelation($className)
     {
@@ -369,14 +369,14 @@ class Table
         {
             return $this->hasOne[$className];
         }
-        throw new \Quartz\Exceptions\NotExistsException('In ' . $this->name . ' ' . $className);
+        throw new \Quartz\Exception\NotExistsException('In ' . $this->name . ' ' . $className);
     }
 
     /**
      *
      * @param string $className
      * @return array
-     * @throws \Quartz\Exceptions\NotExistsException
+     * @throws \Quartz\Exception\NotExistsException
      */
     public function getManyRelation($className)
     {
@@ -384,17 +384,7 @@ class Table
         {
             return $this->hasMany[$className];
         }
-        throw new \Quartz\Exceptions\NotExistsException('In ' . $this->name . ' ' . $className);
-    }
-
-    /**
-     *
-     * @param array $criteria
-     * @return int
-     */
-    public function count(array $criteria = array())
-    {
-        return intval($this->getConnection()->count($this, $criteria));
+        throw new \Quartz\Exception\NotExistsException('In ' . $this->name . ' ' . $className);
     }
 
     /**
@@ -416,7 +406,7 @@ class Table
         throw new \RuntimeException($methodName . ' not implemented in ' . get_class($this));
     }
 
-    public function convertFromDb(array $object = null)
+    public function convertFromDb(array $object = null, Entity $entity = null)
     {
         if (is_null($object))
         {
@@ -453,12 +443,16 @@ class Table
                 $values[$property] = $nvalue;
             }
         }
-        
+
         $className = $this->getObjectClassName($values);
-        $obj = new $className();
-        $obj->hydrate($values);
-        $obj->setNew(false);
-        return $obj;
+        if( is_null($entity) )
+        {
+            $entity = new $className();
+        }
+        $this->hydrate($entity, $values);
+        $entity->setNew(false);
+        $entity->setModified(false);
+        return $entity;
     }
 
     public function convertPropertyValueToDb($property, $value)
@@ -495,6 +489,11 @@ class Table
                 {
                     continue;
                 }
+                
+                if( $this->getPropertyType($property) === 'sequence' && is_null($value) )
+                {
+                    continue;
+                }
                 $row[$property] = $this->convertPropertyValueToDb($property, $value);
             }
         } catch (\Exception $e)
@@ -502,12 +501,62 @@ class Table
             \Logging\LoggersManager::getInstance()->get()->debug($e);
             if (isset($property))
             {
-                \Logging\LoggersManager::getInstance()->get()->debug($object instanceof Entity ? $object->toArray(): $object);
-                throw new \Quartz\Exceptions\FieldFormatException($property, $value, $e->getMessage());
+                \Logging\LoggersManager::getInstance()->get()->debug($object instanceof Entity ? $object->toArray() : $object);
+                throw new \Quartz\Exception\FieldFormatException($property, $value, $e->getMessage());
             }
             throw $e;
         }
         return $row;
+    }
+
+    public function hydrate(Entity &$entity, $row)
+    {
+        foreach ($this->getProperties() as $property)
+        {
+            if (!array_key_exists($property, $row))
+            {
+                $entity->set($property, $this->getDefaultValue($property));
+            } else
+            {
+                $entity->set($property, $row[$property]);
+            }
+        }
+        
+        return $this;
+    }
+
+    public function save(Entity &$entity)
+    {
+        $conn = $this->getConnection();
+        $newObj = null;
+        $returning = implode(', ', array_map(array($this->getConnection(), 'escapeField'), $this->getProperties()));
+        if ($entity->isNew())
+        {
+            $collection = $conn->insert($this, $this->convertToDb($entity), $returning);
+            if( $collection->count() )
+            {
+                $newObj = $this->convertFromDb($collection->current(), $entity);
+            }
+        } else
+        {
+            if ($entity->isModified())
+            {
+                $pKey = $this->getPrimaryKeys();
+                $query = array();
+                foreach ($pKey as $pk)
+                {
+                    $query[$pk] = $this->convertPropertyValueToDb($pk, $entity->get($pk));
+                }
+
+                $values = $this->convertToDb($entity->getValuesUpdated());
+                
+                $collection = $conn->update($this->getName(), $query, $values, $returning);
+                if( $collection->count() )
+                {
+                    $newObj = $this->convertFromDb($collection->current(), $entity);
+                }
+            }
+        }
     }
 
     /**
@@ -517,7 +566,7 @@ class Table
      * @param int $limit
      * @param int $offset
      * @param boolean $forUpdate
-     * @return array
+     * @return Collection
      */
     public function find(array $criteria = array(), array $order = null, $limit = null, $offset = 0, $forUpdate = false)
     {
@@ -525,10 +574,11 @@ class Table
         $self = $this;
         $className = $this->getObjectClassName();
 
-        return array_map(function($item) use($self, $className)
-                {
-                    return $self->convertFromDb($item);
-                }, $res);
+        $res->registerFilter(function($item) use($self, $className)
+        {
+            return $self->convertFromDb($item);
+        });
+        return $res;
     }
 
     /**
@@ -539,9 +589,9 @@ class Table
     public function findOne(array $criteria = array(), array $order = null, $forUpdate = false)
     {
         $res = $this->find($criteria, $order, 1, 0, $forUpdate);
-        if (count($res) > 0)
+        if ($res->count() > 0)
         {
-            return array_shift($res);
+            return $res->current();
         }
         return null;
     }
@@ -577,24 +627,41 @@ class Table
     public function findOneBy($property, $value, $forUpdate = false)
     {
         $res = $this->findBy($property, $value, $forUpdate);
-        if (count($res) > 0)
+        if ($res->count() > 0)
         {
-            return array_shift($res);
+            return $res->current();
         }
         return null;
     }
 
-    public function delete(array $criteria = array(), array $options = array())
+    public function delete(Entity $entity)
+    {
+        $pKey = $this->getPrimaryKeys();
+        $query = array();
+        
+        $query = array();
+        foreach ($pKey as $pk)
+        {
+            $query[$pk] = $this->convertPropertyValueToDb($pk, $entity->get($pk));
+        }
+        
+        $conn = $this->getConnection();
+        $conn->delete($this->getName(), $query);
+        return $entity;
+    }
+
+    
+    /*public function delete(array $criteria = array(), array $options = array())
     {
         return $this->getConnection()->delete($this, $criteria, $options);
-    }
+    }*/
 
     public function escapeProperty($property, $value)
     {
         $type = $this->getPropertyType($property);
         return $this->getConnection()->escape($value, $type);
     }
-    
+
     public function escape($value, $type = 'string')
     {
         return $this->getConnection()->escape($value, $type);

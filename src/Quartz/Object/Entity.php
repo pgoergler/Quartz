@@ -10,13 +10,19 @@ namespace Quartz\Object;
 abstract class Entity implements \ArrayAccess, \IteratorAggregate
 {
 
+    //-
+    protected $status = \Quartz\Quartz::NONE;
+    //-
     protected $className = null;
     protected $table = null;
+    //-
     protected $values = array();
     protected $oldValues = array();
     protected $valuesUpdated = array();
+    //-
     protected $isNew = true;
     protected $exists = false;
+    //-
     protected $objectsLinked = array();
     protected $objectsPreSave = array();
     protected $objectsPostSave = array();
@@ -35,30 +41,57 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
     public function isNew()
     {
-        return $this->isNew;
+        return (boolean) !($this->status & \Quartz\Quartz::EXIST);
+    }
+    
+    public function isModified()
+    {
+        return (boolean) ($this->status & \Quartz\Quartz::MODIFIED);
     }
 
     public function setNew($boolean)
     {
         $this->isNew = $boolean;
+        if( $boolean )
+        {
+            $this->status = $this->status & (0xff ^ \Quartz\Quartz::EXIST);
+            $this->valuesUpdated = array();
+            $this->oldValues = array();
+        }
+        else
+        {
+            $this->status = $this->status | \Quartz\Quartz::EXIST;
+        }
+        return $this;
+    }
+    
+    public function setModified($boolean)
+    {
+        if( $boolean )
+        {
+            $this->status = $this->status | \Quartz\Quartz::MODIFIED;
+        }
+        else
+        {
+            $this->status = $this->status & (0xff ^ \Quartz\Quartz::MODIFIED);
+        }
         return $this;
     }
 
     public function exists()
     {
-        return $this->exists;
+        return (boolean) ($this->status & \Quartz\Quartz::EXIST);
     }
-
+    
     public function __clone()
     {
         $this->setNew(true);
-        //$this->values = clone $this->values;
         $this->exists = false;
     }
 
     public function getOrm()
     {
-        return $this->getTable()->getORM();
+        return $this->getTable()->getOrm();
     }
 
     public function hasChanged()
@@ -72,21 +105,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      */
     public function &getTable(\Quartz\Connection\Connection $conn = null)
     {
-        if ($this->table == null)
-        {
-            if (\Quartz\Quartz::getInstance()->hasTable($this->className))
-            {
-                $this->table = \Quartz\Quartz::getInstance()->getTable($this->className);
-            } else
-            {
-                $tableName = static::getTableClassName();
-                $this->table = new $tableName($conn);
-                $this->table->setObjectClassName($this->className);
-
-                \Quartz\Quartz::getInstance()->setTable($this->className, $this->table);
-            }
-        }
-        return $this->table;
+        $className = get_called_class();
+        return \Quartz\Quartz::getInstance()->getTable($className);
     }
 
     /**
@@ -97,7 +117,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         return $this->valuesUpdated;
     }
-    
+
     /**
      *
      * @return array
@@ -116,7 +136,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         return array_key_exists($property, $this->valuesUpdated);
     }
-    
+
     /**
      * 
      * @param string $property
@@ -126,37 +146,22 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         return array_key_exists($property, $this->oldValues) ? $this->oldValues[$property] : null;
     }
-    
-    /**
-     *
-     * @return string
-     */
-    public static function getTableClassName()
-    {
-        $class = get_called_class();
-
-        if (!isset($class::$tableClassName) || is_null($class::$tableClassName))
-        {
-            return preg_replace('#^(.*)\\\(.*?)$#i', '${1}\\\Table\\\${2}', $class) . 'Table';
-        }
-        return $class::$tableClassName;
-    }
 
     public function getGetter($property)
     {
         $property = preg_replace_callback('#(.)_(.)#', function($m)
-                {
-                    return $m[1] . ucfirst($m[2]);
-                }, $property);
+        {
+            return $m[1] . ucfirst($m[2]);
+        }, $property);
         return 'get' . ucfirst($property);
     }
 
     public function getSetter($property)
     {
         $property = preg_replace_callback('#(.)_(.)#', function($m)
-                {
-                    return $m[1] . ucfirst($m[2]);
-                }, $property);
+        {
+            return $m[1] . ucfirst($m[2]);
+        }, $property);
         return 'set' . ucfirst($property);
     }
 
@@ -176,7 +181,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      * @param string $property
      * @param mixed $value
      * @return \Quartz\Object\Entity
-     * @throws \Quartz\Exceptions\NotExistsException
+     * @throws \Quartz\Exception\NotExistsException
      */
     public function set($property, $value)
     {
@@ -190,6 +195,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $this->oldValues[$property] = $this->values[$property];
             $this->values[$property] = $value;
             $this->valuesUpdated[$property] = $value;
+            
+            $this->status = $this->status | \Quartz\Quartz::MODIFIED;
         }
         return $this;
     }
@@ -209,7 +216,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      * @param string $property
      * @param mixed $value
      * @return \Quartz\Object\Entity
-     * @throws \Quartz\Exceptions\NotExistsException
+     * @throws \Quartz\Exception\NotExistsException
      */
     public function addTo($property, $value)
     {
@@ -227,6 +234,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                 $this->oldValues[$property] = $this->values[$property];
                 $this->values[$property][] = $value;
                 $this->valuesUpdated[$property] = $this->values[$property];
+                $this->status = $this->status | \Quartz\Quartz::MODIFIED;
             }
         }
 
@@ -238,7 +246,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      * @param string $property
      * @param mixed $value
      * @return \Quartz\Object\Entity
-     * @throws \Quartz\Exceptions\NotExistsException
+     * @throws \Quartz\Exception\NotExistsException
      */
     public function removeFrom($property, $value)
     {
@@ -261,6 +269,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
                 $this->values[$property] = $new;
                 $this->valuesUpdated[$property] = $this->values[$property];
+                
+                $this->status = $this->status | \Quartz\Quartz::MODIFIED;
             }
         }
 
@@ -274,7 +284,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      * @param string $relation
      * @param Entity $object
      * @return \Quartz\Object\Entity
-     * @throws \RuntimeException
+     * @throws \Exception
      */
     public function setOneRelation($relation, Entity $object = null)
     {
@@ -295,7 +305,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $class = $config['class'];
             if (!$object instanceof $class)
             {
-                throw new \RuntimeException('In ' . $this->getTable()->getName() . ' manyRelation ' . $relation . ' must be set with ' . $class . ' and not with ' . (is_object($object)? get_class($object) : gettype($object)) );
+                throw new \Exception('In ' . $this->getTable()->getName() . ' manyRelation ' . $relation . ' must be set with ' . $class . ' and not with ' . (is_object($object) ? get_class($object) : gettype($object)));
             }
 
             $this->objectsPreSave[$relation][0] = $object;
@@ -311,7 +321,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      * @param string $relation
      * @param array $objects
      * @return \Quartz\Object\Entity
-     * @throws \RuntimeException
+     * @throws \Exception
      */
     protected function setManyRelation($relation, array $objects = null)
     {
@@ -337,7 +347,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                 }
                 if (!$object instanceof $class)
                 {
-                    throw new \RuntimeException('In ' . $this->getTable()->getName() . ' manyRelation ' . $relation . ' must be set with ' . $class . ' and not with ' . get_class($object));
+                    throw new \Exception('In ' . $this->getTable()->getName() . ' manyRelation ' . $relation . ' must be set with ' . $class . ' and not with ' . get_class($object));
                 }
 
                 $this->objectsPostSave[$relation][] = $object;
@@ -381,8 +391,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
      * @param string $methodName
      * @param array $args
      * @return \Quartz\Object\Entity
-     * @throws \Quartz\Exceptions\NotExistsException
-     * @throws \RuntimeException
+     * @throws \Quartz\Exception\NotExistsException
+     * @throws \Exception
      */
     public function __call($methodName, $args)
     {
@@ -393,7 +403,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             try
             {
                 $property = $this->getTable()->getRealPropertyName($matches[2] . $matches[3]);
-            } catch (\Quartz\Exceptions\NotExistsException $e)
+            } catch (\Quartz\Exception\NotExistsException $e)
             {
                 $property = $matches[2] . $matches[3];
                 $check = array(
@@ -407,8 +417,6 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                 {
                     if ($this->getTable()->hasOneRelation($property))
                     {
-                        //Logger::getRootLogger()->trace($this->className . ' has single relation with ' . $property);
-
                         if ($function == 'get')
                         {
                             return $this->getRelation($property);
@@ -419,11 +427,9 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                         }
                     } else if ($this->getTable()->hasManyRelation($property))
                     {
-                        //Logger::getRootLogger()->trace($this->className . ' has many relation with ' . $property);
                         if ($function == 'get')
                         {
                             return $this->getRelation($property);
-                            //return $this->getTable()->findHasSingleRelation($property, $this, false);
                         } else
                         {
                             $this->setManyRelation($property, is_array($args[0]) ? $args[0] : $args );
@@ -453,15 +459,15 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                     case 'removeFrom':
                         return $this->removeFrom($property, $args[0]);
                     default:
-                        throw new \Quartz\Exceptions\NotExistsException('In ' . $this->getTable()->getName() . ' method ' . $methodName);
+                        throw new \Quartz\Exception\NotExistsException('In ' . $this->getTable()->getName() . ' method ' . $methodName);
                 }
-            } catch (\Quartz\Exceptions\NotExistsException $e)
+            } catch (\Quartz\Exception\NotExistsException $e)
             {
                 throw $e;
             }
         }
 
-        throw new \RuntimeException($methodName . ' not implemented in ' . get_class($this));
+        throw new \Exception($methodName . ' not implemented in ' . get_class($this));
     }
 
     /**
@@ -485,29 +491,21 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
         $foreign = $config['foreign'];
         $class = $config['class'];
 
-        //Logger::getRootLogger()->trace("$class::findBy" . ucfirst($foreign) . "(\$object->$getter()) one?" . ($one ? 'true' : 'false'));
-
         if ($this->get($local) != null)
         {
-            $fct = 'findBy' . ucfirst($foreign);
-            //$objs = \Quartz\Quartz::getInstance()->getTable($class)->$fct($this->get($local));
             $objs = \Quartz\Quartz::getInstance()->getTable($class)->find(array($foreign => $this->get($local)), $config['orderBy'], $config['limit'], $config['offset']);
 
             if ($one)
             {
-                $obj = array_shift($objs);
+                $obj = $objs->current();
                 if ($obj)
                 {
                     return $obj;
                 }
-                //Logger::getRootLogger()->trace("no association found");
             } else
             {
                 return $objs;
             }
-        } else
-        {
-            //Logger::getRootLogger()->trace("link is null");
         }
         return null;
     }
@@ -532,7 +530,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $this->set($local, $value);
         } else if ($this->getTable()->hasManyRelation($relation))
         {
-            if( null === $object )
+            if (null === $object)
             {
                 return $this;
             }
@@ -564,7 +562,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             {
                 $this->objectsLinked[$relation] = array();
             }
-            if( null !== $object )
+            if (null !== $object)
             {
                 $this->objectsLinked[$relation][] = $object;
             }
@@ -598,56 +596,11 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     public function save()
     {
         $this->preSave();
-
-        $conn = $this->getTable()->getConnection();
-        $primaryKeys = $this->getTable()->getPrimaryKeys();
-
-        if ($this->isNew())
-        {
-            foreach ($this->values as $key => $value)
-            {
-                if ($this->getTable()->getPropertyType($key) == 'sequence' && is_null($value))
-                {
-                    try
-                    {
-                        $this->values[$key] = $this->getTable()->getConnection()->getSequence($this->getTable(), $key);
-                    } catch (\RuntimeException $e)
-                    {
-                        $this->values[$key] = null;
-                    }
-                }
-            }
-
-            $newObj = $this->getTable()->convertFromDb($conn->insert($this->getTable(), $this->getTable()->convertToDb($this)));
-            foreach ($primaryKeys as $property)
-            {
-                $this->set($property, $newObj[$property]);
-            }
-            $this->valuesUpdated = array();
-        } else
-        {
-            if (count($this->getValuesUpdated()) > 0)
-            {
-                $pKey = $this->getTable()->getPrimaryKeys();
-                $query = array();
-                foreach ($pKey as $pk)
-                {
-                    $query[$pk] = $this->get($pk);
-                }
-
-                $values = $this->getTable()->convertToDb($this->getValuesUpdated());
-
-                $this->valuesUpdated = array();
-
-                $conn->update($this->getTable()->getName(), $query, $values);
-
-                //$conn->updateEntity($this);
-            }
-        }
-
+        $this->getTable()->save($this);
         $this->postSave();
 
         $this->setNew(false);
+        $this->valuesUpdated = array();
         $this->exists = true;
 
         return $this;
@@ -655,32 +608,10 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
     public function delete()
     {
-        $conn = $this->getTable()->getConnection();
-        $conn->deleteEntity($this);
-        $this->exists = false;
-        $this->setNew(true);
+        $this->getTable()->delete($this);
+        $this->status = \Quartz\Quartz::NONE;
         $this->valuesUpdated = array();
         return true;
-    }
-
-    public function hydrate($row)
-    {
-        foreach ($this->getTable()->getProperties() as $property)
-        {
-            //$setter = $this->getSetter($property);
-            //$setter = 'set';
-            if (!array_key_exists($property, $row))
-            {
-                $this->set($property, $this->getTable()->getDefaultValue($property));
-            } else
-            {
-                //$nvalue = $this->getTable()->checkPropertyValue($property, $row[$property]);
-
-                $this->set($property, $row[$property]);
-            }
-        }
-        $this->valuesUpdated = array();
-        return $this;
     }
 
     /**
@@ -707,8 +638,6 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $foreign = $config['foreign'];
             $class = $config['class'];
 
-
-            //$getter = $this->getGetter($local);
             $query = array(
                 $foreign => $this->get($local),
             );
@@ -751,7 +680,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                     throw new \InvalidArgumentException(sprintf('In %s "%s" does not exist.', $this->className, $name));
                 } else
                 {
-                    return $this->getRelation($property, false);
+                    return $this->getRelation($name, false);
                 }
             } else
             {

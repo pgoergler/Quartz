@@ -7,7 +7,7 @@ namespace Quartz\Converter\PgSQL;
  *
  * @author paul
  */
-class BooleanConverter implements \Quartz\Converter\ConverterInterface
+class BooleanConverter implements \Quartz\Converter\Converter
 {
 
     public function fromDb($data, $type = null)

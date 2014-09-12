@@ -7,7 +7,7 @@ namespace Quartz\Converter\PgSQL;
  *
  * @author paul
  */
-class ByteaConverter implements \Quartz\Converter\ConverterInterface
+class ByteaConverter implements \Quartz\Converter\Converter
 {
 
     public function fromDb($data, $type = null)

@@ -7,7 +7,7 @@ namespace Quartz\Converter\PgSQL;
  *
  * @author paul
  */
-class StringConverter implements \Quartz\Converter\ConverterInterface
+class StringConverter implements \Quartz\Converter\Converter
 {
 
     public function fromDb($data, $type = null)
@@ -16,9 +16,6 @@ class StringConverter implements \Quartz\Converter\ConverterInterface
         {
             return null;
         }
-        /* $data = str_replace("'", "''", $data);
-          $type = is_null($type) ? '' : sprintf("%s ", $type);
-          $data = sprintf("%s'%s'",  $type, $data); */
         return preg_replace('#([\'"])(.*?)([\'"])$#i', '$2', $data);
     }
 

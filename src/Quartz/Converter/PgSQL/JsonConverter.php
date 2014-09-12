@@ -7,7 +7,7 @@ namespace Quartz\Converter\PgSQL;
  *
  * @author paul
  */
-class JsonConverter implements \Quartz\Converter\ConverterInterface
+class JsonConverter implements \Quartz\Converter\Converter
 {
 
     public function fromDb($data, $type = null)

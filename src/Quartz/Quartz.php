@@ -9,18 +9,21 @@ namespace Quartz;
  */
 class Quartz
 {
+    
+    const NONE = 0;
+    const EXIST = 1;
+    const MODIFIED = 2;
 
     protected $tables = array();
-    protected $configs = array();
     protected $connections = array();
-    protected $initialized = false;
+    //-
     protected static $_instance = null;
 
     protected function __construct()
     {
-
+        
     }
-
+    
     public function isInitialized()
     {
         return $this->initialized;
@@ -38,10 +41,11 @@ class Quartz
         return $this;
     }
 
-    public function getConfigs()
+    public function getConfigurations()
     {
         return $this->configs;
     }
+
 
     /**
      *
@@ -57,46 +61,14 @@ class Quartz
         return static::$_instance;
     }
 
-    /**
-     *
-     * @param string $className
-     * @return \Quartz\Object\Table
-     */
-    public function &getTable($className)
+    public static function setInstance(\Quartz &$quartz)
     {
-        if (!$this->hasTable($className))
-        {
-            $obj = new $className();
-            $this->setTable($className, $obj->getTable());
-        }
-        return $this->instances[$className];
+        static::$_instance = $quartz;
     }
 
     /**
      *
-     * @param string $className
-     * @param \Quartz\Object\Table $table
-     * @return \Quartz\Quartz
-     */
-    public function setTable($className, \Quartz\Object\Table &$table)
-    {
-        $this->instances[$className] = $table;
-        return $this;
-    }
-
-    public function hasTable($className)
-    {
-        return isset($this->instances[$className]);
-    }
-
-    public function setConnection($name, Connection\Connection &$connetion)
-    {
-        $this->connections[$name] = $connection;
-    }
-
-    /**
-     *
-     * @param String $database_config_name
+     * @param String $name
      * @return \Quartz\Connection\Connection
      */
     public function &getConnection($name)
@@ -113,13 +85,7 @@ class Quartz
 
                 $driver = $this->configs[$name]['driver'];
 
-                $conn = new $driver($this->configs[$name]['host'],
-                                $this->configs[$name]['user'],
-                                $this->configs[$name]['password'],
-                                $this->configs[$name]['database'],
-                                $this->configs[$name]['extra']);
-
-                //$conn = $this->__createDatabase($this->configs[$name]);
+                $conn = new $driver($this->configs[$name]['host'], $this->configs[$name]['user'], $this->configs[$name]['password'], $this->configs[$name]['database'], $this->configs[$name]['extra']);
                 $conn->connect();
                 $this->connections[$name] = $conn;
                 return $this->connections[$name];
@@ -130,12 +96,65 @@ class Quartz
         }
     }
 
+    public function setConnection($name, Connection\Connection &$connetion)
+    {
+        $this->connections[$name] = $connection;
+    }
+
     public function closeAll()
     {
-        foreach( $this->connections as $name => $conn)
+        foreach ($this->connections as $conn)
         {
             $conn->close();
         }
+    }
+    
+    public function getTableClassNameFromEntityClassName($className)
+    {
+        if( isset($className::$tableClassName) && !is_null($className::$tableClassName) )
+        {
+            $tableClassname = $className::$tableClassName;
+        }
+        else
+        {
+            $tableClassname = preg_replace('#^(.*)\\\(.*?)$#i', '${1}\\\Table\\\${2}', $className) . 'Table';
+        }
+        
+        return $tableClassname;
+    }
+    
+    /**
+     *
+     * @param string $className
+     * @return \Quartz\Object\Table
+     */
+    public function &getTable($className, \Quartz\Connection\Connection $conn = null)
+    {
+        if (!$this->hasTable($className))
+        {
+            $tableName = $this->getTableClassNameFromEntityClassName($className);
+            $table = new $tableName($conn);
+            $table->setObjectClassName($className);
+            $this->setTable($className, $table);
+        }
+        return $this->tables[$className];
+    }
+
+    /**
+     *
+     * @param string $className
+     * @param \Quartz\Object\Table $table
+     * @return \Quartz\Quartz
+     */
+    public function setTable($className, \Quartz\Object\Table &$table)
+    {
+        $this->tables[$className] = $table;
+        return $this;
+    }
+
+    public function hasTable($className)
+    {
+        return isset($this->tables[$className]);
     }
 
     public function getDatabaseName($name)
@@ -154,7 +173,7 @@ class Quartz
         $extra = array();
         if (isset($configuration['dsn']))
         {
-            $config = Connection\Connection::processDsn($configuration['dsn']);
+            $config = Connection\Dsn::extract($configuration['dsn']);
             if (isset($configuration['extra']))
             {
                 $extra = $configuration['extra'];
@@ -171,7 +190,7 @@ class Quartz
 
         $extra = array_merge($extra, array(
             'persistant' => isset($configuration['persistant']) ? $configuration['persistant'] : false,
-                ));
+        ));
 
         return array(
             'driver' => $driver,

@@ -2,13 +2,48 @@
 
 namespace Quartz\Connection;
 
-class PgsqlConnection extends Connection
+/**
+ * Description of PgsqlConnection
+ *
+ * @author paul
+ */
+class PgsqlConnection extends AbstractTransactionalConnection
 {
 
     protected $rConnect;
     protected $rLastQuery;
     protected $sLastQuery;
     protected $isPersistant = false;
+
+    protected function beginImplementation()
+    {
+        return $this->query('BEGIN TRANSACTION;');
+    }
+
+    protected function commitImplementation()
+    {
+        return $this->query('COMMIT;');
+    }
+
+    protected function rollbackImplementation()
+    {
+        return $this->query('ROLLBACK;');
+    }
+
+    public function close()
+    {
+        $this->closed = true;
+        if (!$this->isPersistant && $this->rConnect)
+        {
+            @pg_close($this->rConnect);
+            $this->rConnect = null;
+        }
+    }
+
+    public function commitSavepoint($savepoint)
+    {
+        return $this->query("RELEASE SAVEPOINT $savepoint;");
+    }
 
     public function configure()
     {
@@ -26,7 +61,6 @@ class PgsqlConnection extends Connection
 
     public function connect()
     {
-
         $host = $this->hostname;
         $port = null;
         if (preg_match('#^(.*?):([0-9]+)$#', $host, $m))
@@ -54,34 +88,15 @@ class PgsqlConnection extends Connection
 
         if (!$this->rConnect)
         {
-            throw new \RuntimeException("CONNECTION ERROR To(" . $connect . ") : " . $this->error());
+            throw new \Exception("CONNECTION ERROR To(" . $connect . ") : " . $this->error());
         }
 
         $this->closed = false;
     }
 
-    public function close()
+    public function convertType($type)
     {
-        $this->closed = true;
-        if (!$this->isPersistant && $this->rConnect)
-        {
-            @pg_close($this->rConnect);
-            $this->rConnect = null;
-        }
-    }
-
-    public function isClosed()
-    {
-        return $this->closed;
-    }
-
-    public function &getConnection()
-    {
-        return $this->rConnect;
-    }
-
-    public function convertClassType($type)
-    {
+        $type = \strtolower($type);
         $rootType = $type;
         $extra = '';
         if (preg_match('#^(.*?)(([\(\[])(.*?)([\)\]]))$#', $rootType, $m))
@@ -99,309 +114,15 @@ class PgsqlConnection extends Connection
                 return $type;
         }
     }
-
-    public function getSequence($table, $key, array $options = array())
-    {
-        $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
-        $res = $this->query('SELECT nextval(\'' . $tableName . '_' . $key . '_seq\'::regclass) AS counter;');
-        $row = $this->farray($res);
-        $this->free($res);
-        return $row['counter'];
-    }
-
-    protected function escapeBinary($value)
-    {
-        return pg_escape_bytea($this->rConnect, $value);
-    }
-
-    protected function escapeString($value)
-    {
-        return pg_escape_string($this->rConnect, $value);
-    }
-
-    public function command(array $options = array())
-    {
-        $query = isset($options['query']) ? $options['query'] : null;
-        $buffered = isset($options['buffered']) ? $options['buffered'] : false;
-        if (isset($options['fetch']) && $options['fetch'])
-        {
-            $res = $this->query($query, $buffered);
-            if (is_callable($options['fetch']))
-            {
-                return $this->fall($res, $options['fetch']);
-            }
-            return $this->fall($res);
-        }
-        return $this->query($query, $buffered);
-    }
-
-    public function count($table, array $criteria = array())
-    {
-        $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
-        $where = array();
-        foreach ($criteria as $k => $v)
-        {
-            if (is_int($k))
-            {
-                $where[] = $v;
-            } else
-            {
-                $where[] = $this->escapeFieldName($k) . ' = ' . $this->castToSQL($v);
-            }
-        }
-        if (count($where) == 0)
-        {
-            $where[] = "1 = 1";
-        }
-
-        $query = 'SELECT COUNT(*) as nb FROM ' . $tableName . ' WHERE ' . implode(' AND ', $where) . ';';
-
-        $res = $this->query($query);
-        $row = $this->farray($res);
-        $this->free($res);
-        return $row['nb'];
-    }
-
-    public function find($table, array $criteria = array(), $order = null, $limit = null, $offset = 0, $forUpdate = false)
-    {
-        $orderby = null;
-        if (!is_null($order))
-        {
-            if (is_array($order))
-            {
-                $orderby = array();
-                foreach ($order as $k => $sort)
-                {
-                    $orderby[] = $k . ( ($sort === 1) ? ' ASC' : ' DESC');
-                }
-                $orderby = implode(', ', $orderby);
-            } else
-            {
-                $orderby = $order;
-            }
-        }
-
-        $where = array();
-        foreach ($criteria as $k => $v)
-        {
-            if (is_int($k))
-            {
-                $where[] = $v;
-            } else
-            {
-                $where[] = $this->escapeFieldName($k) . ' = ' . $this->castToSQL($v);
-            }
-        }
-
-        $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
-
-        $query = 'SELECT * FROM ' . $tableName
-                . (empty($where) ? '' : ' WHERE ' . implode(' AND ', $where) )
-                . (is_null($orderby) || empty($orderby) ? '' : ' ORDER BY ' . $orderby )
-                . (is_null($limit) ? '' : ' LIMIT ' . $limit . (is_null($offset) ? '' : ' OFFSET ' . ($offset * $limit)));
-        if ($forUpdate)
-        {
-            $query .= ' FOR UPDATE';
-        }
-        $res = $this->query($query);
-        $rows = $this->fall($res);
-        $this->free($res);
-        return $rows;
-    }
-
-    public function insert(\Quartz\Object\Table $table, $object)
-    {
-        $query = "INSERT INTO %s ( %s ) VALUES (%s) RETURNING %s";
-        $fields = implode(', ', array_map(array($this, 'escapeFieldName'), array_keys($object)));
-        $res = $this->query(sprintf($query, $table->getName(), $fields, implode(",", $object), $fields));
-        if( $res )
-        {
-            return $this->farray($res);
-        }
-        return $object;
-    }
-
-    public function update($table, $query, $object, $options = array())
-    {
-        $self = $this;
-
-        $callback = function($k, $v) use($self)
-                {
-                    return $self->escapeFieldName($k) . ' = ' . $v . " "; // no castToSQL because already done by table->convertToDb()
-                };
-
-        $where = array();
-        foreach ($query as $k => $v)
-        {
-            if (is_int($k))
-            {
-                $where[] = $v;
-            } else
-            {
-                $where[] = $this->escapeFieldName($k) . " = " . $this->castToSQL($v);
-            }
-        }
-
-        $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
-
-        $query = "UPDATE " . $tableName . " SET ";
-        $query .= implode(', ', array_map($callback, array_keys($object), $object));
-        $query .= " WHERE " . implode(' AND ', $where) . ";";
-
-        return $this->query($query);
-    }
-
-    public function delete(\Quartz\Object\Table $table, $query, $options = array())
-    {
-        $where = array();
-        foreach ($query as $k => $v)
-        {
-            if (is_int($k))
-            {
-                $where[] = $v;
-            } else
-            {
-                $where[] = $this->escapeFieldName($k) . ' = ' . $this->castToSQL($v);
-            }
-        }
-
-        $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
-
-        //Logger::getRootLogger()->trace($where);
-        $query = 'DELETE FROM ' . $tableName . ((count($where) > 0) ? ' WHERE ' . implode(' AND ', $where) : '' ) . ";";
-        return $this->query($query);
-    }
-
-    protected function __begin()
-    {
-        return $this->query('BEGIN TRANSACTION;');
-    }
     
-    public function __savepoint($savepoint)
+    public function countRows($resource)
     {
-        return $this->query("SAVEPOINT $savepoint;");
-    }
-    
-    public function __commitSavepoint($savepoint)
-    {
-        return $this->query("RELEASE SAVEPOINT $savepoint;");
-    }
-    
-    public function __rollbackSavepoint($savepoint)
-    {
-        return $this->query("ROLLBACK TO SAVEPOINT $savepoint;");
-    }
-
-    protected function __commit()
-    {
-        return $this->query('COMMIT;');
-    }
-
-    protected function __rollback()
-    {
-        return $this->query('ROLLBACK;');
-    }
-
-    public function query($sQuery, $unbuffered = false)
-    {
-        if (is_null($sQuery))
+        if ($resource && is_resource($resource))
+            ;
         {
-            return null;
+            return pg_num_rows($resource);
         }
-
-        if ($this->isClosed())
-        {
-            $this->connect();
-        }
-
-        //Logger::getRootLogger()->trace($sQuery);
-
-        $this->sLastQuery = $sQuery;
-
-        $this->rLastQuery = @pg_query($this->rConnect, $sQuery);
-
-        if ($this->error())
-            throw new \RuntimeException($sQuery . "\n" . $this->error());
-
-        return $this->rLastQuery;
-    }
-
-    /* iResultType:
-     * PGSQL_NUM: les indices du tableau sont des entiers.
-     * PGSQL_ASSOC: les indices du tableau sont les noms des clefs
-     */
-
-    public function farray($rQuery = null, $callback = null, $iResultType = PGSQL_ASSOC)
-    {
-        $iResultType = ($iResultType == null) ? PGSQL_ASSOC : $iResultType;
-        if ($rQuery == null)
-            $rQuery = $this->rLastQuery;
-
-        $row = @pg_fetch_array($rQuery, null, $iResultType);
-        if ($row && !is_null($callback) && is_callable($callback))
-        {
-            $row = $callback($row);
-        }
-        return $row;
-    }
-
-    public function fall($rQuery = null, $callback = null, $iResultType = PGSQL_ASSOC)
-    {
-        //$iResultType = ($iResultType == null) ? PGSQL_ASSOC : $iResultType;
-        $result = array();
-        while ($row = $this->farray($rQuery, $callback, $iResultType))
-        {
-            $result[] = $row;
-        }
-        return $result;
-    }
-
-    public function free($rQuery = null)
-    {
-        if ($rQuery == null)
-            $rQuery = $this->rLastQuery;
-
-        if (is_resource($rQuery))
-            return pg_free_result($rQuery);
-
-        return null;
-    }
-
-    /* Renvoie le dernier id de la requete INSERT */
-
-    public function lastid()
-    {
-        //return @mysql_insert_id();
-    }
-
-    public function error()
-    {
-        return @pg_last_error($this->rConnect);
-    }
-
-    public function escapeFieldName($field)
-    {
-        return '"' . $field . '"';
-    }
-
-    public function castToSQL($value)
-    {
-        if (is_null($value))
-        {
-            return 'null';
-        }
-
-        if (is_string($value))
-        {
-            return "'$value'";
-        }
-
-        if (is_bool($value))
-        {
-            return $value ? "'t'" : "'f'";
-        }
-
-        return $value;
+        return 0;
     }
 
     public function create(\Quartz\Object\Table $table)
@@ -413,7 +134,7 @@ class PgsqlConnection extends Connection
         $primaries = array();
 
         $tableSlugname = preg_replace('#^(.*?\.)(.*?)$#', '$2', $table->getName());
-        
+
         foreach ($table->getColumns() as $columnName => $configuration)
         {
             $type = strtolower($table->getPropertyType($columnName));
@@ -439,16 +160,16 @@ class PgsqlConnection extends Connection
             $notNull = $configuration['notnull'] ? 'NOT NULL' : '';
             $default = is_null($configuration['value']) ? '' : $configuration['value'];
 
-            $fields[] = sprintf('%s %s %s', $this->escapeFieldName($columnName), $sqlType, $notNull, $default);
+            $fields[] = sprintf('%s %s %s', $this->escapeField($columnName), $sqlType, $notNull, $default);
 
             if ($configuration['primary'])
             {
-                $primaries[] = $this->escapeFieldName($columnName);
+                $primaries[] = $this->escapeField($columnName);
             }
-            
+
             if ($configuration['unique'])
             {
-                $constraints[] = 'CONSTRAINT ' . $this->escapeFieldName($tableSlugname . '_' . $columnName. '_ukey') .' UNIQUE (' . $this->escapeFieldName($columnName) . ')';
+                $constraints[] = 'CONSTRAINT ' . $this->escapeField($tableSlugname . '_' . $columnName . '_ukey') . ' UNIQUE (' . $this->escapeField($columnName) . ')';
             }
         }
 
@@ -461,6 +182,241 @@ class PgsqlConnection extends Connection
         );
 
         return $this->query(strtr($sql, $replace));
+    }
+
+    public function drop(\Quartz\Object\Table $table, $cascade = false)
+    {
+        $query = 'DROP TABLE IF EXISTS ' . $table->getName() . ( $cascade ? ' CASCADE' : '') . ';';
+        return $this->query($query);
+    }
+    
+    public function error()
+    {
+        return @pg_last_error($this->rConnect);
+    }
+
+    public function escapeBinary($value)
+    {
+        return pg_escape_bytea($this->rConnect, $value);
+    }
+
+    public function escapeNumber($value, $type = 'integer')
+    {
+        settype($value, $type);
+        return $value;
+    }
+
+    public function escapeString($value)
+    {
+        return pg_escape_string($this->rConnect, $value);
+    }
+
+    public function fetchRow($resource, $index = null)
+    {
+        return pg_fetch_array($resource, $index, PGSQL_ASSOC);
+    }
+
+    public function &getRaw()
+    {
+        return $this->rConnect;
+    }
+
+    public function isClosed()
+    {
+        return $this->closed;
+    }
+
+    public function query($query, $parameters = array())
+    {
+        if (is_null($query))
+        {
+            return null;
+        }
+
+        if ($this->isClosed())
+        {
+            $this->connect();
+        }
+
+        $this->sLastQuery = $query;
+
+        $this->rLastQuery = @pg_query($this->rConnect, $query);
+
+        if ($this->error())
+        {
+            throw new \Exception($query . "\n" . $this->error());
+        }
+        return $this->rLastQuery;
+    }
+
+    public function rollbackSavepoint($savepoint)
+    {
+        return $this->query("ROLLBACK TO SAVEPOINT $savepoint;");
+    }
+
+    public function savepoint($savepoint)
+    {
+        return $this->query("SAVEPOINT $savepoint;");
+    }
+
+    public function escapeField($field)
+    {
+        return '"' . $field . '"';
+    }
+
+    public function free($resource)
+    {
+        if (is_resource($resource))
+        {
+            return pg_free_result($resource);
+        }
+
+        return null;
+    }
+
+    public function delete($tableName, $query, $returning = '*', $options = array())
+    {
+        $where = array();
+        foreach ($query as $k => $v)
+        {
+            if (is_int($k))
+            {
+                $where[] = $v;
+            } else
+            {
+                $where[] = $this->escapeField($k) . ' = ' . $v;
+            }
+        }
+
+        $tableName = ($tableName instanceof \Quartz\Object\Table) ? $tableName->getName() : $tableName;
+        $query = 'DELETE FROM ' . $tableName . ((count($where) > 0) ? ' WHERE ' . implode(' AND ', $where) : '' );
+        if( !is_null($returning) )
+        {
+            $fields = is_array($returning) ? implode(', ', $returning) : "$returning";
+            $query .= " RETURNING " . $fields;
+        }
+        $query .= ";";
+        return new \Quartz\Object\Collection($this, $this->query($query));
+    }
+
+    public function find($table, array $criteria = array(), $order = null, $limit = null, $offset = 0, $forUpdate = false)
+    {
+        $orderby = null;
+        if (!is_null($order))
+        {
+            if (is_array($order))
+            {
+                $sorted = array();
+                foreach ($order as $k => $sort)
+                {
+                    $sorted[] = $k . ( ($sort === 1) ? ' ASC' : ' DESC');
+                }
+                $orderby = implode(', ', $sorted);
+            } else
+            {
+                $orderby = $order;
+            }
+        }
+
+        $where = array();
+        foreach ($criteria as $k => $v)
+        {
+            if (is_int($k))
+            {
+                $where[] = $v;
+            } else
+            {
+                $type = $table->getPropertyType($k);
+                $where[] = $this->escapeField($k) . ' = ' . $this->convertToDb($v, $type);
+            }
+        }
+
+        $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
+
+        $query = 'SELECT * FROM ' . $tableName
+                . (empty($where) ? '' : ' WHERE ' . implode(' AND ', $where) )
+                . (is_null($orderby) || empty($orderby) ? '' : ' ORDER BY ' . $orderby )
+                . (is_null($limit) ? '' : ' LIMIT ' . $limit . (is_null($offset) ? '' : ' OFFSET ' . ($offset * $limit)));
+
+        if ($forUpdate)
+        {
+            $query .= ' FOR UPDATE';
+        }
+
+        return new \Quartz\Object\Collection($this, $this->query($query));
+    }
+
+    public function insert($table, $object, $returning = '*')
+    {
+        $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
+        $query = "INSERT INTO %s ( %s ) VALUES (%s)";
+        if( !is_null($returning) )
+        {
+            // $fields = is_array($returning) ? implode(', ', array_map(array($this, 'escapeField'), $returning)) : "$returning";
+            $fields = is_array($returning) ? implode(', ', $returning) : "$returning";
+            $query .= " RETURNING " . $fields;
+        }
+        $query .= ";";
+        
+        $fields = implode(', ', array_map(array($this, 'escapeField'), array_keys($object)));
+        $res = $this->query(sprintf($query, $tableName, $fields, implode(",", $object), $fields));
+        return new \Quartz\Object\Collection($this, $res);
+    }
+
+    public function update($table, $query, $object, $returning = '*', $options = array())
+    {
+        $self = $this;
+
+        $callback = function($k, $v) use($self)
+        {
+            return $self->escapeField($k) . ' = ' . $v . " "; // no castToSQL because already done by table->convertToDb()
+        };
+
+        $where = array();
+        foreach ($query as $k => $v)
+        {
+            if (is_int($k))
+            {
+                $where[] = $v;
+            } else
+            {
+                $where[] = $this->escapeField($k) . ' = ' . $v;
+            }
+        }
+
+        $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
+
+        $query = "UPDATE " . $tableName . " SET ";
+        $query .= implode(', ', array_map($callback, array_keys($object), $object));
+        $query .= " WHERE " . implode(' AND ', $where);
+        if( !is_null($returning) )
+        {
+            $fields = is_array($returning) ? implode(', ', $returning) : "$returning";
+            $query .= " RETURNING " . $fields;
+        }
+        $query .= ";";
+
+        return new \Quartz\Object\Collection($this, $this->query($query));
+    }
+
+    protected function castToSQL($value)
+    {
+        if (is_null($value))
+        {
+            return 'null';
+        }
+
+        if (is_string($value))
+        {
+            return "'$value'";
+        }
+
+        if (is_bool($value))
+        {
+            return $value ? "'t'" : "'f'";
+        }
+
+        return $value;
     }
 
 }
