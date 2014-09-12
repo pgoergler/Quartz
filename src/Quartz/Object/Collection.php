@@ -14,11 +14,14 @@ class Collection implements \Iterator, \Countable
     protected $connection;
     protected $result;
     protected $position = 0;
+    protected $numRows;
 
     public function __construct(\Quartz\Connection\Connection &$connection, $result)
     {
         $this->connection = $connection;
         $this->result = $result;
+        $this->position = $this->result === false ? null : 0;
+        $this->numRows = $this->result === false ? 0 : $this->connection->countRows($this->result);
         $this->clearFilters();
     }
 
@@ -32,11 +35,7 @@ class Collection implements \Iterator, \Countable
 
     public function count()
     {
-        if( $this->result )
-        {
-            return $this->connection->countRows($this->result);
-        }
-        return 0;
+        return $this->numRows;
     }
 
     public function current()
@@ -96,7 +95,7 @@ class Collection implements \Iterator, \Countable
      */
     public function isEmpty()
     {
-        return pg_num_rows($this->result_resource) === 0;
+        return $this->count() === 0;
     }
 
     /**
@@ -125,7 +124,7 @@ class Collection implements \Iterator, \Countable
 
     public function get($index)
     {
-        if( !$this->result )
+        if( !$this->result || $this->count() === 0 || !$this->has($index))
         {
             return false;
         }
