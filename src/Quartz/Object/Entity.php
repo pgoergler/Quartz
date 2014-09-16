@@ -55,8 +55,6 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
         if( $boolean )
         {
             $this->status = $this->status & (0xff ^ \Quartz\Quartz::EXIST);
-            $this->valuesUpdated = array();
-            $this->oldValues = array();
         }
         else
         {
@@ -96,7 +94,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
     public function hasChanged()
     {
-        return $this->isNew == true || count($this->valuesUpdated) > 0;
+        return $this->isModified();
     }
 
     /**
@@ -196,7 +194,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $this->values[$property] = $value;
             $this->valuesUpdated[$property] = $value;
             
-            $this->status = $this->status | \Quartz\Quartz::MODIFIED;
+            $this->setModified(true);
         }
         return $this;
     }
@@ -568,6 +566,18 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             }
         }
         return $this;
+    }
+    
+    public function hydrate($values)
+    {
+        foreach($values as $key => $value)
+        {
+            $this->set($key, $value);
+        }
+        $this->setNew(false);
+        $this->setModified(false);
+        $this->oldValues = array();
+        $this->valuesUpdated = array();
     }
 
     /**

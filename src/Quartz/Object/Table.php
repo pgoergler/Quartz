@@ -511,17 +511,18 @@ class Table
 
     public function hydrate(Entity &$entity, $row)
     {
+        $values = array();
         foreach ($this->getProperties() as $property)
         {
             if (!array_key_exists($property, $row))
             {
-                $entity->set($property, $this->getDefaultValue($property));
+                $values[$property] = $this->getDefaultValue($property);
             } else
             {
-                $entity->set($property, $row[$property]);
+                $values[$property] = $row[$property];
             }
         }
-        
+        $entity->hydrate($values);
         return $this;
     }
 
