@@ -20,6 +20,7 @@ class Table
     protected $hasOne = array();
     protected $hasMany = array();
     protected $hasAndBelongsToMany = array();
+    protected $mappedProperty = array();
 
     public function __construct(\Quartz\Connection\Connection $conn = null, \Quartz\Quartz $orm = null)
     {
@@ -161,10 +162,19 @@ class Table
         }
 
         $this->properties[$property] = $conf;
+        $camelCase = preg_replace_callback('#(^|_)(.)#', function($matches){
+            return strtoupper($matches[2]);
+        }, $property);
+        $this->mappedProperty[$camelCase] = $property;
     }
 
     public function getRealPropertyName($property)
     {
+        if( isset($this->mappedProperty[$property]) )
+        {
+            return $this->mappedProperty[$property];
+        }
+        
         $check = array(
             strtolower($property),
             $property,

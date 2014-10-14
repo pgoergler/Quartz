@@ -171,7 +171,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     public function get($property)
     {
         $property = $this->getTable()->getRealPropertyName($property);
-        return $this->getTable()->hasProperty($property) ? $this->values[$property] : $this->table->getDefaultValue($property);
+        return $this->values[$property];
     }
 
     /**
