@@ -192,11 +192,28 @@ class PgsqlConnection extends AbstractTransactionalConnection
     
     public function error()
     {
-        return @pg_last_error($this->rConnect);
+        if( !is_resource($this->rLastQuery) ){
+            return false;
+        }
+        $state = pg_result_error_field($this->rLastQuery, PGSQL_DIAG_SQLSTATE);
+        return $state == 0 ? false : pg_result_error_field($this->rLastQuery, PGSQL_DIAG_MESSAGE_PRIMARY);
+        //return @pg_last_error($this->rConnect);
+    }
+    
+    public function errorCode()
+    {
+        if( !is_resource($this->rLastQuery) ){
+            return false;
+        }
+        return pg_result_error_field($this->rLastQuery, PGSQL_DIAG_SQLSTATE);
     }
 
     public function escapeBinary($value)
     {
+        if ($this->isClosed())
+        {
+            $this->connect();
+        }
         return pg_escape_bytea($this->rConnect, $value);
     }
 
@@ -208,6 +225,10 @@ class PgsqlConnection extends AbstractTransactionalConnection
 
     public function escapeString($value)
     {
+        if ($this->isClosed())
+        {
+            $this->connect();
+        }
         return pg_escape_string($this->rConnect, $value);
     }
 
@@ -237,14 +258,15 @@ class PgsqlConnection extends AbstractTransactionalConnection
         {
             $this->connect();
         }
-
+        
         $this->sLastQuery = $query;
 
-        $this->rLastQuery = @pg_query($this->rConnect, $query);
+        @pg_send_query($this->rConnect, $query);
+        $this->rLastQuery = @pg_get_result($this->rConnect);
 
-        if ($this->error())
+        if ($this->errorCode())
         {
-            throw new \Exception($query . "\n" . $this->error());
+            throw new \Quartz\Exception\SqlException($this, $query);
         }
         return $this->rLastQuery;
     }
