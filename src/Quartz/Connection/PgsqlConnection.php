@@ -118,7 +118,6 @@ class PgsqlConnection extends AbstractTransactionalConnection
     public function countRows($resource)
     {
         if ($resource && is_resource($resource))
-            ;
         {
             return pg_num_rows($resource);
         }
