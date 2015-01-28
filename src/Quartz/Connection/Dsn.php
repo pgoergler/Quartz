@@ -19,7 +19,7 @@ class Dsn
      */
     public static function extract($dsn)
     {
-        if (!preg_match('#(?P<driver>[a-z]+)://(?P<user>[^:@]+)(?::(?P<password>[^@]+))?(?:@(?P<host>[\w\.]+|!/.+[^/]!)(?::(\w+))?)?/(?P<database>\w+)#', $dsn, $matchs))
+        if (!preg_match('#(?P<driver>[a-z]+)://(?P<user>[^:@]+)(?::(?P<password>[^@]+))?(?:@(?P<host>[\-\w\.]+|!/.+[^/]!)(?::(\w+))?)?/(?P<database>\w+)#', $dsn, $matchs))
         {
             throw new \Exception(sprintf('Cound not parse DSN "%s".', $dsn));
         }
