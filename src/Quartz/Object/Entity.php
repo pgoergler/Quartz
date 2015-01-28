@@ -38,6 +38,15 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $this->values[$property] = $table->getDefaultValue($property);
         }
     }
+    
+    public static function getTableClassName()
+    {
+        if( isset(static::$tableClassName) && !is_null(static::$tableClassName) )
+        {
+            return static::$tableClassName;
+        }
+        return preg_replace('#^(.*)\\\(.*?)$#i', '${1}\\\Table\\\${2}', get_called_class()) . 'Table';
+    }
 
     public function isNew()
     {

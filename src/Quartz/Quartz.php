@@ -111,9 +111,9 @@ class Quartz
     
     public function getTableClassNameFromEntityClassName($className)
     {
-        if( isset($className::$tableClassName) && !is_null($className::$tableClassName) )
+        if(is_callable(array($className, 'getTableClassName')) )
         {
-            $tableClassname = $className::$tableClassName;
+            $tableClassname = $className::getTableClassName();
         }
         else
         {
@@ -132,8 +132,8 @@ class Quartz
     {
         if (!$this->hasTable($className))
         {
-            $tableName = $this->getTableClassNameFromEntityClassName($className);
-            $table = new $tableName($conn);
+            $tableClass= $this->getTableClassNameFromEntityClassName($className);
+            $table = new $tableClass($conn);
             $table->setObjectClassName($className);
             $this->setTable($className, $table);
         }
