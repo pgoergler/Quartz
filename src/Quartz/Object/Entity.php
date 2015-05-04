@@ -199,7 +199,10 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
         if ($newValue !== $oldValue)
         {
-            $this->oldValues[$property] = $this->values[$property];
+            if( !array_key_exists($property, $this->oldValues) )
+            {
+                $this->oldValues[$property] = $this->values[$property];
+            }
             $this->values[$property] = $value;
             $this->valuesUpdated[$property] = $value;
             
@@ -263,7 +266,10 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
         {
             if (in_array($value, $this->values[$property]))
             {
-                $this->oldValues[$property] = $this->values[$property];
+                if( !array_key_exists($property, $this->oldValues))
+                {
+                    $this->oldValues[$property] = $this->values[$property];
+                }
 
                 $new = array();
                 foreach ($this->values[$property] as $elt)

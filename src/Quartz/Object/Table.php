@@ -553,10 +553,11 @@ class Table
             if ($entity->isModified())
             {
                 $pKey = $this->getPrimaryKeys();
+                $previousValues = $entity->getPreviousValues();
                 $query = array();
                 foreach ($pKey as $pk)
                 {
-                    $query[$pk] = $this->convertPropertyValueToDb($pk, $entity->get($pk));
+                    $query[$pk] = $this->convertPropertyValueToDb($pk, array_key_exists($pk, $previousValues) ? $previousValues[$pk] : $entity->get($pk));
                 }
 
                 $values = $this->convertToDb($entity->getValuesUpdated());
