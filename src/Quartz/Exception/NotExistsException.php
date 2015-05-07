@@ -2,7 +2,7 @@
 
 namespace Quartz\Exception;
 
-class NotExistsException extends \Exception
+class NotExistsException extends SqlException
 {
     public function __construct($elt='undef', $code = 0, $previous = null)
     {

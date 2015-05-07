@@ -7,7 +7,7 @@ namespace Quartz\Exception;
  *
  * @author paul
  */
-class FieldFormatException extends \InvalidArgumentException
+class FieldFormatException extends SqlException
 {
 
     protected $field;

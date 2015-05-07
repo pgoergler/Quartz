@@ -2,7 +2,7 @@
 
 namespace Quartz\Exception;
 
-class NotNullValueException extends \Exception
+class NotNullValueException extends SqlException
 {
 
     public function __construct($msg)

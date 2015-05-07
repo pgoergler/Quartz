@@ -1,0 +1,16 @@
+<?php
+
+namespace Quartz\Exception;
+
+/**
+ * Description of SqlException
+ *
+ * @author paul
+ */
+class SqlException extends \Exception
+{
+    public function __construct($message, $code = 0, $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+}
