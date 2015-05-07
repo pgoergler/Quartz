@@ -96,22 +96,22 @@ class PgsqlConnection extends AbstractTransactionalConnection
 
     public function convertType($type)
     {
-        $type = \strtolower($type);
         $rootType = $type;
-        $extra = '';
-        if (preg_match('#^(.*?)(([\(\[])(.*?)([\)\]]))$#', $rootType, $m))
+        $parameter = '';
+        $arraySize = false;
+        if (preg_match('#^(?P<type>.*?)(\((?P<parameter>.*?)\))?(?P<array>\[(?P<array_size>.*?)\])?$#', $rootType, $m))
         {
-            $rootType = $m[1];
-            $extra = $m[2];
+            $rootType = $m['type'];
+            $parameter = array_key_exists('parameter', $m) ? $m['parameter'] : '';
+            $array = array_key_exists('array', $m);
+            $arraySize = $array ? ($m['array_size'] ?: null) : false;
         }
         switch ($rootType)
         {
             case 'string':
-                return 'varchar' . $extra;
-            case 'integer':
-                return 'integer' . $extra;
+                return array('varchar', $parameter, $arraySize);
             default:
-                return $type;
+                return array(\strtolower($rootType), $parameter, $arraySize);
         }
     }
     
@@ -137,25 +137,11 @@ class PgsqlConnection extends AbstractTransactionalConnection
         foreach ($table->getColumns() as $columnName => $configuration)
         {
             $type = strtolower($table->getPropertyType($columnName));
-            $converter = null;
-            $isArray = false;
+            $typeParameter = $table->getPropertyTypeParameter($columnName);
+            $isArray = $table->isPropertyArray($columnName) ? $table->getPropertyTypeArraySize($columnName) : false;
+            $converter = $this->getConverterForType($type);
 
-            $fieldType = $type;
-            if (preg_match('#^([a-z0-9_\.-]+)$#i', $type, $matchs))
-            {
-                $fieldType = $matchs[1];
-            } else if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
-            {
-                $fieldType = $matchs[1];
-                $isArray = $matchs[2];
-            } else if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
-            {
-                $fieldType = $matchs[1];
-            }
-
-            $converter = $this->getConverterForType($fieldType);
-
-            $sqlType = $converter->translate($type) . ( $isArray !== false ? "[$isArray]" : '');
+            $sqlType = $converter->translate($type, $typeParameter) . ( $isArray !== false ? "[$isArray]" : '');
             $notNull = $configuration['notnull'] ? 'NOT NULL' : '';
             $default = is_null($configuration['value']) ? '' : $configuration['value'];
 
@@ -243,7 +229,7 @@ class PgsqlConnection extends AbstractTransactionalConnection
 
         if ($this->error())
         {
-            throw new \Exception($query . "\n" . $this->error());
+            throw new \Quartz\Exception\SqlQueryException($query, $this->error(), $this);
         }
         return $this->rLastQuery;
     }

@@ -10,7 +10,7 @@ namespace Quartz\Converter\PgSQL;
 class JsonConverter implements \Quartz\Converter\Converter
 {
 
-    public function fromDb($data, $type = null)
+    public function fromDb($data, $type, $typeParameter)
     {
         if ($data == 'NULL')
         {
@@ -32,7 +32,7 @@ class JsonConverter implements \Quartz\Converter\Converter
         }
     }
 
-    public function toDb($data, $type = null)
+    public function toDb($data, $type, $typeParameter)
     {
         if (is_null($type))
         {
@@ -57,8 +57,14 @@ class JsonConverter implements \Quartz\Converter\Converter
         return "'" . preg_replace("#'#", "\\'", json_encode($data)) . "'";
     }
 
-    public function translate($type)
+    public function translate($type, $parameter)
     {
-        return 'json';
+        $array = '';
+        if (preg_match('#\[(.*)\]#', $parameter, $matchs))
+        {
+            $array = '[' . $matchs[1] . ']';
+        }
+        return "json$array";
     }
+
 }

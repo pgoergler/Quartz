@@ -19,7 +19,7 @@ interface Converter
      * @param $type String  Optional type.
      * @return Mixed PHP respresentation of the data.
      **/
-    public function fromDb($data, $type = null);
+    public function fromDb($data, $type, $typeParameter);
 
     /**
      * toDb
@@ -30,7 +30,7 @@ interface Converter
      * @param $type String  Optional type.
      * @return String Db converted string for input.
      **/
-    public function toDb($data, $type = null);
+    public function toDb($data, $type, $typeParameter);
     
     /** 
      *
@@ -38,7 +38,5 @@ interface Converter
      * 
      */
     
-    public function translate($type);
+    public function translate($type, $parameter);
 }
-
-?>

@@ -10,7 +10,7 @@ namespace Quartz\Converter\PgSQL;
 class NumberConverter implements \Quartz\Converter\Converter
 {
 
-    public function fromDb($data, $type = null)
+    public function fromDb($data, $type, $typeParameter)
     {
         if ($data === 'NULL' || $data === 'null' || is_null($data))
         {
@@ -37,7 +37,7 @@ class NumberConverter implements \Quartz\Converter\Converter
         throw new \InvalidArgumentException($data . ' is not a number (int, float or double)');
     }
 
-    public function toDb($data, $type = null)
+    public function toDb($data, $type, $typeParameter)
     {
         if (is_null($data))
         {
@@ -46,7 +46,7 @@ class NumberConverter implements \Quartz\Converter\Converter
 
         if (is_numeric($data))
         {
-            $data = str_replace(',', '.', $data) + 0;// force type juggling
+            $data = str_replace(',', '.', $data) + 0; // force type juggling
             if (is_double($data))
             {
                 return doubleval($data);
@@ -64,37 +64,49 @@ class NumberConverter implements \Quartz\Converter\Converter
         throw new \InvalidArgumentException($data . ' is not a number (int, float or double)');
     }
 
-    public function translate($type)
+    public function translate($type, $parameter)
     {
+        $array = '';
+        if (preg_match('#\[(.*)\]#', $parameter, $matchs))
+        {
+            $array = '[' . $matchs[1] . ']';
+        }
+
         switch ($type)
         {
             case 'smallint':
             case 'int2':
-                return 'smallint';
+                return "smallint$array";
 
             case 'bigint':
             case 'int8':
-                return 'bigint';
+                return "bigint$array";
 
             case 'real':
             case 'float4':
-                return 'real';
+                return "real$array";
 
             case 'double':
             case 'float8':
-                return 'double precision';
+                return "double precision$array";
 
             case 'sequence':
-                return 'serial';
+                return "serial";
             case 'sequence8':
+            case 'bigsequence':
                 return 'bigserial';
 
-            default:
-                if (preg_match('#^(numeric|decimal)\(([0-9]+(,[0-9]+))\)$#i', $type, $matchs))
+            case 'numeric':
+            case 'decimal':
+                $size = '';
+                if (preg_match('#\((.*?)\)#', $parameter, $matchs))
                 {
-                    return 'numeric(' . $matchs[2] . ')';
+                    $size = '(' . $matchs[1] . ')';
+                    return "numeric$size$array";
                 }
-                return 'integer';
+                return "integer$array";
+            default:
+                return "integer$array";
         }
     }
 

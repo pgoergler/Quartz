@@ -10,7 +10,7 @@ namespace Quartz\Converter\PgSQL;
 class HStoreConverter implements \Quartz\Converter\Converter
 {
 
-    public function fromDb($data, $type = null)
+    public function fromDb($data, $type, $typeParameter)
     {
         if ($data == 'NULL')
         {
@@ -31,7 +31,7 @@ class HStoreConverter implements \Quartz\Converter\Converter
         return $hstore;
     }
 
-    public function toDb($data, $type = null)
+    public function toDb($data, $type, $typeParameter)
     {
         if (is_null($data) || $data === '')
         {
@@ -52,21 +52,27 @@ class HStoreConverter implements \Quartz\Converter\Converter
                 $insert_values[] = sprintf('"%s" => NULL', $key);
             } elseif (is_array($value))
             {
-                $insert_values[] = sprintf('"%s" => "%s"',  addcslashes($key, '\"'), addcslashes(json_encode($value), '\"'));
+                $insert_values[] = sprintf('"%s" => "%s"', addcslashes($key, '\"'), addcslashes(json_encode($value), '\"'));
             } elseif (is_object($value))
             {
-                $insert_values[] = sprintf('"%s" => "%s"',  addcslashes($key, '\"'), addcslashes(json_encode($value), '\"'));
+                $insert_values[] = sprintf('"%s" => "%s"', addcslashes($key, '\"'), addcslashes(json_encode($value), '\"'));
             } else
             {
-                $insert_values[] = sprintf('"%s" => "%s"',  addcslashes($key, '\"'), addcslashes($value, '\"'));
+                $insert_values[] = sprintf('"%s" => "%s"', addcslashes($key, '\"'), addcslashes($value, '\"'));
             }
         }
 
         return sprintf("%s(\$hst\$%s\$hst\$)", $type, join(', ', $insert_values));
     }
 
-    public function translate($type)
+    public function translate($type, $parameter)
     {
-        return 'hstore';
+        $array = '';
+        if (preg_match('#\[(.*)\]#', $parameter, $matchs))
+        {
+            $array = '[' . $matchs[1] . ']';
+        }
+        return "hstore$array";
     }
+
 }

@@ -10,7 +10,7 @@ namespace Quartz\Converter\PgSQL;
 class TimestampWithTimezoneConverter implements \Quartz\Converter\Converter
 {
 
-    public function fromDb($data, $type = null)
+    public function fromDb($data, $type, $typeParameter)
     {
         if ($data === 'NULL' || $data === 'null' || $data === null || $data === '')
         {
@@ -23,7 +23,7 @@ class TimestampWithTimezoneConverter implements \Quartz\Converter\Converter
         return new \DateTime($data);
     }
 
-    public function toDb($data, $type = null)
+    public function toDb($data, $type, $typeParameter)
     {
         if (is_null($data))
         {
@@ -44,9 +44,14 @@ class TimestampWithTimezoneConverter implements \Quartz\Converter\Converter
         return sprintf("%s '%s'", 'timestamp with time zone', $data->format('Y-m-d H:i:s.uP'));
     }
 
-    public function translate($type)
+    public function translate($type, $parameter)
     {
-        return 'timestamp with time zone';
+        $array = '';
+        if (preg_match('#\[(.*)\]#', $parameter, $matchs))
+        {
+            $array = '[' . $matchs[1] . ']';
+        }
+        return "timestamp with time zone$array";
     }
 
 }

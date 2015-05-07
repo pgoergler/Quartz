@@ -10,7 +10,7 @@ namespace Quartz\Converter\PgSQL;
 class BooleanConverter implements \Quartz\Converter\Converter
 {
 
-    public function fromDb($data, $type = null)
+    public function fromDb($data, $type, $typeParameter)
     {
         if ($data === 'NULL' || $data === 'null' || $data === null)
         {
@@ -19,7 +19,7 @@ class BooleanConverter implements \Quartz\Converter\Converter
         return is_int($data) ? ($data ? true : false) : in_array($data, array('t', 'T', 'true', 'TRUE', 'yes', 'YES', 1, 'on', 'ON'));
     }
 
-    public function toDb($data, $type = null)
+    public function toDb($data, $type, $typeParameter)
     {
         if (is_null($data))
         {
@@ -34,9 +34,14 @@ class BooleanConverter implements \Quartz\Converter\Converter
         }
     }
 
-    public function translate($type)
+    public function translate($type, $parameter)
     {
-        return 'boolean';
+        $array = '';
+        if (preg_match('#\[(.*)\]#', $parameter, $matchs))
+        {
+            $array = '[' . $matchs[1] . ']';
+        }
+        return "boolean$array";
     }
 
 }

@@ -135,15 +135,18 @@ class Table
 
     public function addColumn($property, $type, $defaultValue, $notnull = true, $options = array())
     {
+        list($typeClean, $typeParameter, $array) = $this->getConnection()->convertType($type);
         $conf = array(
-            'type' => $this->getConnection()->convertType($type),
+            'type' => $typeClean,
+            'type_parameter' => $typeParameter,
+            'array_infos' => $array,
             'value' => $defaultValue,
             'notnull' => ($notnull) ? true : false,
             'primary' => false,
             'unique' => false,
         );
 
-        switch ($type)
+        switch ($typeClean)
         {
             case 'enum':
                 $conf['values'] = (isset($options['values']) && is_array($options['values']) ) ? $options['values'] : array();
@@ -225,6 +228,33 @@ class Table
             return $this->properties[$property]['type'];
         }
         return null;
+    }
+    
+    public function getPropertyTypeParameter($property)
+    {
+        if ($this->hasProperty($property))
+        {
+            return $this->properties[$property]['type_parameter'];
+        }
+        return null;
+    }
+    
+    public function isPropertyArray($property)
+    {
+        if ($this->hasProperty($property))
+        {
+            return $this->properties[$property]['array_infos'] !== false;
+        }
+        return false;
+    }
+    
+    public function getPropertyTypeArraySize($property)
+    {
+        if ($this->hasProperty($property) && $this->isPropertyArray($property))
+        {
+            return $this->properties[$property]['array_infos'];
+        }
+        return 0;
     }
 
     public function getEnumValues($property)
@@ -433,23 +463,23 @@ class Table
             } else
             {
                 $type = $this->getPropertyType($property);
-                if (preg_match('#^([a-z0-9_\.-]+)$#i', $type, $matchs))
+                $typeParameter = $this->getPropertyTypeParameter($property);
+                if( $this->isPropertyArray($property) )
                 {
-                    $type = $matchs[1];
-                    $converter = $this->getConnection()->getConverterForType($type);
-                } else if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
-                {
-                    $type = $matchs[1];
+                    $elementConverter = $this->getConnection()->getConverterForType($type);
+                    $convertFn = function($value) use (&$elementConverter, $type, $typeParameter) {
+                        return $elementConverter->fromDb($value, $type, $typeParameter);
+                    };
                     $converter = $this->getConnection()->getConverterFor('Array');
-                } else if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
-                {
-                    $type = $matchs[1];
-                    $converter = $this->getConnection()->getConverterForType($type);
+                    $nvalue = $converter->fromDb($object[$property], $type, array(
+                        'size' => $this->getPropertyTypeArraySize($property),
+                        'converter' => $convertFn
+                    ));
                 } else
                 {
                     $converter = $this->getConnection()->getConverterForType($type);
+                    $nvalue = $converter->fromDb($object[$property], $type, $typeParameter);
                 }
-                $nvalue = $converter->fromDb($object[$property], $type);
                 $values[$property] = $nvalue;
             }
         }
@@ -468,24 +498,24 @@ class Table
     public function convertPropertyValueToDb($property, $value)
     {
         $type = $this->getPropertyType($property);
-        if (preg_match('#^([a-z0-9_\.-]+)$#i', $type, $matchs))
+        $typeParameter = $this->getPropertyTypeParameter($property);
+        if( $this->isPropertyArray($property) )
         {
-            $type = $matchs[1];
-            $converter = $this->getConnection()->getConverterForType($type);
-        } else if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
-        {
-            $type = $matchs[1];
+            $elementConverter = $this->getConnection()->getConverterForType($type);
+            $convertFn = function($value) use (&$elementConverter, $type, $typeParameter) {
+                return $elementConveter->toDb($value, $type, $typeParameter);
+            };
             $converter = $this->getConnection()->getConverterFor('Array');
-        } else if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
-        {
-            $type = $matchs[1];
-            $converter = $this->getConnection()->getConverterForType($type);
+            $nvalue = $converter->ToDb($value, $type, array(
+                'size' => $this->getPropertyTypeArraySize($property),
+                'conveter' => $convertFn
+            ));
         } else
         {
             $converter = $this->getConnection()->getConverterForType($type);
+            $nvalue = $converter->toDb($value, $type, $typeParameter);
         }
-
-        return $converter->toDb($value, $type);
+        return $nvalue;
     }
 
     public function convertToDb($object)

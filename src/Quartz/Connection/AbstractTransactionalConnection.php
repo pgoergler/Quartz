@@ -232,14 +232,14 @@ abstract class AbstractTransactionalConnection implements Connection
     {
         $rootType = $this->extractType($type);
         $converter = $this->getConverterForType($rootType);
-        return $converter->fromDb($value, $type);
+        return $converter->fromDb($value, $type, null);
     }
 
     public function convertToDb($value, $type = null)
     {
         $rootType = $this->extractType($type);
         $converter = $this->getConverterForType($rootType);
-        return $converter->toDb($value, $type);
+        return $converter->toDb($value, $type, null);
     }
 
 }
