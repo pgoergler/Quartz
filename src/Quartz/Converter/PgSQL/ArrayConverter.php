@@ -48,10 +48,7 @@ class ArrayConverter implements \Quartz\Converter\Converter
             }
 
             $fn = is_array($typeParameter) && isset($typeParameter['converter']) ? $typeParameter['converter'] : false;
-            if (is_callable($fn))
-            {
-                
-            } else
+            if (!is_callable($fn))
             {
                 \Logging\LoggersManager::getInstance()->get()->error('converter not set in {0} ? {1}', [$typeParameter, $fn]);
                 $converter = $this->connection->getConverterForType($type);
@@ -89,13 +86,12 @@ class ArrayConverter implements \Quartz\Converter\Converter
         }
 
         $arraySize = is_array($typeParameter) ? $typeParameter['size'] : $typeParameter;
-        $array = $data;
         if ($arraySize > 0)
         {
-            $array = \array_slice($data, 0, $arraySize);
+            $data = \array_slice($data, 0, $arraySize);
         }
 
-        $fn = is_array($typeParameter) && isset($typeParameter['converter']);
+        $fn = is_array($typeParameter) && isset($typeParameter['converter']) ? $typeParameter['converter'] : false;
         if (!is_callable($fn))
         {
             $converter = $this->connection->getConverterForType($type);
@@ -104,7 +100,7 @@ class ArrayConverter implements \Quartz\Converter\Converter
                 return $converter->toDb($value, $type, null);
             };
         }
-        \array_walk($array, function($value) use(&$fn)
+        $array = \array_map(function($value) use(&$fn)
         {
 
             if (is_null($value))
@@ -113,7 +109,7 @@ class ArrayConverter implements \Quartz\Converter\Converter
             }
 
             return call_user_func($fn, $value);
-        });
+        }, $data);
 
         return sprintf('ARRAY[%s]::%s[]', join(',', $array), $type);
     }

@@ -503,12 +503,12 @@ class Table
         {
             $elementConverter = $this->getConnection()->getConverterForType($type);
             $convertFn = function($value) use (&$elementConverter, $type, $typeParameter) {
-                return $elementConveter->toDb($value, $type, $typeParameter);
+                return $elementConverter->toDb($value, $type, $typeParameter);
             };
             $converter = $this->getConnection()->getConverterFor('Array');
             $nvalue = $converter->ToDb($value, $type, array(
                 'size' => $this->getPropertyTypeArraySize($property),
-                'conveter' => $convertFn
+                'converter' => $convertFn
             ));
         } else
         {
