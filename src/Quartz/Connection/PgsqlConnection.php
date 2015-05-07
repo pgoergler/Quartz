@@ -104,7 +104,7 @@ class PgsqlConnection extends AbstractTransactionalConnection
             $rootType = $m['type'];
             $parameter = array_key_exists('parameter', $m) ? $m['parameter'] : '';
             $array = array_key_exists('array', $m);
-            $arraySize = $array ? ($m['array_size'] ?: null) : false;
+            $arraySize = $array ? ($m['array_size'] ? : null) : false;
         }
         switch ($rootType)
         {
@@ -114,7 +114,7 @@ class PgsqlConnection extends AbstractTransactionalConnection
                 return array(\strtolower($rootType), $parameter, $arraySize);
         }
     }
-    
+
     public function countRows($resource)
     {
         if ($resource && is_resource($resource))
@@ -174,14 +174,33 @@ class PgsqlConnection extends AbstractTransactionalConnection
         $query = 'DROP TABLE IF EXISTS ' . $table->getName() . ( $cascade ? ' CASCADE' : '') . ';';
         return $this->query($query);
     }
-    
+
     public function error()
     {
-        return @pg_last_error($this->rConnect);
+        if (!is_resource($this->rLastQuery))
+        {
+            return false;
+        }
+        $state = pg_result_error_field($this->rLastQuery, PGSQL_DIAG_SQLSTATE);
+        return $state == 0 ? false : pg_result_error_field($this->rLastQuery, PGSQL_DIAG_MESSAGE_PRIMARY);
+        //return @pg_last_error($this->rConnect);
+    }
+
+    public function errorCode()
+    {
+        if (!is_resource($this->rLastQuery))
+        {
+            return false;
+        }
+        return pg_result_error_field($this->rLastQuery, PGSQL_DIAG_SQLSTATE);
     }
 
     public function escapeBinary($value)
     {
+        if ($this->isClosed())
+        {
+            $this->connect();
+        }
         return pg_escape_bytea($this->rConnect, $value);
     }
 
@@ -193,6 +212,10 @@ class PgsqlConnection extends AbstractTransactionalConnection
 
     public function escapeString($value)
     {
+        if ($this->isClosed())
+        {
+            $this->connect();
+        }
         return pg_escape_string($this->rConnect, $value);
     }
 
@@ -225,9 +248,10 @@ class PgsqlConnection extends AbstractTransactionalConnection
 
         $this->sLastQuery = $query;
 
-        $this->rLastQuery = @pg_query($this->rConnect, $query);
+        @pg_send_query($this->rConnect, $query);
+        $this->rLastQuery = @pg_get_result($this->rConnect);
 
-        if ($this->error())
+        if ($this->errorCode())
         {
             throw new \Quartz\Exception\SqlQueryException($query, $this->error(), $this);
         }
@@ -275,7 +299,7 @@ class PgsqlConnection extends AbstractTransactionalConnection
 
         $tableName = ($tableName instanceof \Quartz\Object\Table) ? $tableName->getName() : $tableName;
         $query = 'DELETE FROM ' . $tableName . ((count($where) > 0) ? ' WHERE ' . implode(' AND ', $where) : '' );
-        if( !is_null($returning) )
+        if (!is_null($returning))
         {
             $fields = is_array($returning) ? implode(', ', $returning) : "$returning";
             $query .= " RETURNING " . $fields;
@@ -335,14 +359,14 @@ class PgsqlConnection extends AbstractTransactionalConnection
     {
         $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
         $query = "INSERT INTO %s ( %s ) VALUES (%s)";
-        if( !is_null($returning) )
+        if (!is_null($returning))
         {
             // $fields = is_array($returning) ? implode(', ', array_map(array($this, 'escapeField'), $returning)) : "$returning";
             $fields = is_array($returning) ? implode(', ', $returning) : "$returning";
             $query .= " RETURNING " . $fields;
         }
         $query .= ";";
-        
+
         $fields = implode(', ', array_map(array($this, 'escapeField'), array_keys($object)));
         $res = $this->query(sprintf($query, $tableName, $fields, implode(",", $object), $fields));
         return new \Quartz\Object\Collection($this, $res);
@@ -374,7 +398,7 @@ class PgsqlConnection extends AbstractTransactionalConnection
         $query = "UPDATE " . $tableName . " SET ";
         $query .= implode(', ', array_map($callback, array_keys($object), $object));
         $query .= " WHERE " . implode(' AND ', $where);
-        if( !is_null($returning) )
+        if (!is_null($returning))
         {
             $fields = is_array($returning) ? implode(', ', $returning) : "$returning";
             $query .= " RETURNING " . $fields;

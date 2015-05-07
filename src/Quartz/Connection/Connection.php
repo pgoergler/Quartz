@@ -20,6 +20,10 @@ interface Connection
     
     public function query($query, $parameters = array());
     
+    public function error();
+    
+    public function errorCode();
+    
     public function begin();
     
     public function commit();
