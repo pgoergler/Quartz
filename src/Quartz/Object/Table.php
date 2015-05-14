@@ -530,7 +530,7 @@ class Table
                     continue;
                 }
                 
-                if( $this->getPropertyType($property) === 'sequence' && is_null($value) )
+                if( in_array($this->getPropertyType($property), array('sequence', 'bigsequence', 'serial', 'bigserial')) && is_null($value) )
                 {
                     continue;
                 }

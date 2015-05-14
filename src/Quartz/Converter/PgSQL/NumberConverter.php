@@ -75,10 +75,12 @@ class NumberConverter implements \Quartz\Converter\Converter
         switch ($type)
         {
             case 'smallint':
+            case 'smallinteger':
             case 'int2':
                 return "smallint$array";
 
             case 'bigint':
+            case 'biginteger':
             case 'int8':
                 return "bigint$array";
 
@@ -91,9 +93,11 @@ class NumberConverter implements \Quartz\Converter\Converter
                 return "double precision$array";
 
             case 'sequence':
+            case 'serial':
                 return "serial";
             case 'sequence8':
             case 'bigsequence':
+            case 'bigserial':
                 return 'bigserial';
 
             case 'numeric':

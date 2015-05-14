@@ -50,8 +50,10 @@ class PgsqlConnection extends AbstractTransactionalConnection
         $this->registerConverter('Array', new \Quartz\Converter\PgSQL\ArrayConverter($this), array('array'));
         $this->registerConverter('Json', new \Quartz\Converter\PgSQL\JsonConverter(), array('json'));
         $this->registerConverter('Boolean', new \Quartz\Converter\PgSQL\BooleanConverter(), array('bool', 'boolean'));
-        $this->registerConverter('Number', new \Quartz\Converter\PgSQL\NumberConverter(), array('int2', 'int4', 'int8', 'numeric', 'float4', 'float8', 'integer', 'sequence'));
+        $this->registerConverter('Number', new \Quartz\Converter\PgSQL\NumberConverter(), array('smallint', 'smallinteger', 'int2', 'int4', 'int8', 'numeric', 'double', 'float4', 'float8', 'integer', 'biginteger', 'sequence', 'bigsequence', 'serial', 'bigserial'));
         $this->registerConverter('String', new \Quartz\Converter\PgSQL\StringConverter(), array('varchar', 'char', 'text', 'uuid', 'tsvector', 'xml', 'bpchar', 'string', 'enum'));
+        $this->registerConverter('Time', new \Quartz\Converter\PgSQL\TimeConverter(), array('time'));
+        $this->registerConverter('TimeTZ', new \Quartz\Converter\PgSQL\TimeWithTimezoneConverter(), array('timetz', 'time with time zone', 'time with timezone'));
         $this->registerConverter('Timestamp', new \Quartz\Converter\PgSQL\TimestampConverter(), array('timestamp', 'date', 'time', 'datetime', 'unixtime'));
         $this->registerConverter('TimestampTZ', new \Quartz\Converter\PgSQL\TimestampWithTimezoneConverter(), array('timestamptz', 'timestamp with time zone', 'timestamp with timezone'));
         $this->registerConverter('HStore', new \Quartz\Converter\PgSQL\HStoreConverter(), array('hstore'));

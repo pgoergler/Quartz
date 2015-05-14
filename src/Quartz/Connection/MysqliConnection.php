@@ -88,7 +88,7 @@ class MysqliConnection extends AbstractTransactionalConnection
     {
         $this->registerConverter('Array', new \Quartz\Converter\MySQL\ArrayConverter($this), array());
         $this->registerConverter('Boolean', new \Quartz\Converter\MySQL\BooleanConverter(), array('bool', 'boolean'));
-        $this->registerConverter('Number', new \Quartz\Converter\MySQL\NumberConverter(), array('int2', 'int4', 'int8', 'numeric', 'float4', 'float8', 'integer', 'sequence'));
+        $this->registerConverter('Number', new \Quartz\Converter\MySQL\NumberConverter(), array('smallint', 'smallinteger', 'int2', 'int4', 'int8', 'numeric', 'double', 'float4', 'float8', 'integer', 'biginteger', 'sequence', 'bigsequence', 'serial', 'bigserial'));
         $this->registerConverter('String', new \Quartz\Converter\MySQL\StringConverter(), array('varchar', 'char', 'text', 'uuid', 'tsvector', 'xml', 'bpchar', 'string', 'enum'));
         $this->registerConverter('Timestamp', new \Quartz\Converter\MySQL\TimestampConverter(), array('timestamp', 'date', 'time', 'datetime', 'unixtime'));
         $this->registerConverter('HStore', new \Quartz\Converter\MySQL\HStoreConverter(), array('hstore'));

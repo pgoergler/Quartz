@@ -69,10 +69,12 @@ class NumberConverter implements \Quartz\Converter\Converter
         switch ($type)
         {
             case 'smallint':
+            case 'smallinteger':
             case 'int2':
                 return 'SMALLINT';
 
             case 'bigint':
+            case 'biginteger':
             case 'int8':
                 return 'BIGINT';
 
@@ -95,7 +97,10 @@ class NumberConverter implements \Quartz\Converter\Converter
                 return 'DOUBLE';
 
             case 'sequence':
+            case 'serial':
                 return 'SERIAL';
+            case 'bigsequence':
+            case 'bigserial':
             case 'sequence8':
                 return 'SERIAL';
 
