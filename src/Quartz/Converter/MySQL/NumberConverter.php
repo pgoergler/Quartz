@@ -80,13 +80,7 @@ class NumberConverter implements \Quartz\Converter\Converter
 
             case 'numeric':
             case 'decimal':
-                $size = '';
-                if (preg_match('#\((.*?)\)#', $parameter, $matchs))
-                {
-                    $size = '(' . $matchs[1] . ')';
-                    return "DECIMAL$size";
-                }
-                return 'INTEGER';
+                return "DECIMAL($parameter)";
 
             case 'real':
             case 'float4':

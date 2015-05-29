@@ -102,13 +102,7 @@ class NumberConverter implements \Quartz\Converter\Converter
 
             case 'numeric':
             case 'decimal':
-                $size = '';
-                if (preg_match('#\((.*?)\)#', $parameter, $matchs))
-                {
-                    $size = '(' . $matchs[1] . ')';
-                    return "numeric$size$array";
-                }
-                return "integer$array";
+                return "numeric($parameter)$array";
             default:
                 return "integer$array";
         }
