@@ -184,8 +184,7 @@ class PgsqlConnection extends AbstractTransactionalConnection
             return false;
         }
         $state = pg_result_error_field($this->rLastQuery, PGSQL_DIAG_SQLSTATE);
-        return $state == 0 ? false : pg_result_error_field($this->rLastQuery, PGSQL_DIAG_MESSAGE_PRIMARY);
-        //return @pg_last_error($this->rConnect);
+        return $state === 0 ? false : pg_result_error_field($this->rLastQuery, PGSQL_DIAG_MESSAGE_PRIMARY);
     }
 
     public function errorCode()

@@ -333,7 +333,7 @@ class MysqliConnection extends AbstractTransactionalConnection
                 }
                 else
                 {
-                    $pks[] = sprintf("%s = %s", $name, $table->convertPropertyValueToDb($name, $object[$name]));
+                    $pks[] = sprintf("%s = %s", $name, $object[$name]);
                 }
             }
         }
