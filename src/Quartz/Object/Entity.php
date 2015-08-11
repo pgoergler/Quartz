@@ -510,10 +510,13 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
             if ($one)
             {
-                $obj = $objs->current();
-                if ($obj)
+                if( ! $objs->isEmpty() )
                 {
-                    return $obj;
+                    $obj = $objs->current();
+                    if ($obj)
+                    {
+                        return $obj;
+                    }
                 }
             } else
             {
