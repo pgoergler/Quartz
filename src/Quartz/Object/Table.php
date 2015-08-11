@@ -614,9 +614,7 @@ class Table
     {
         $res = $this->getConnection()->find($this, $criteria, $order, $limit, $offset, $forUpdate);
         $self = $this;
-        $className = $this->getObjectClassName();
-
-        $res->registerFilter(function($item) use($self, $className)
+        $res->registerFilter(function($item) use($self)
         {
             return $self->convertFromDb($item);
         });
