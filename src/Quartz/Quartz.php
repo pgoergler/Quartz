@@ -120,6 +120,13 @@ class Quartz
             $tableClassname = preg_replace('#^(.*)\\\(.*?)$#i', '${1}\\\Table\\\${2}', $className) . 'Table';
         }
         
+        if( !class_exists($tableClassname) ) {
+            $parent = get_parent_class($className);
+            if( $parent !== false ) {
+                return $this->getTableClassNameFromEntityClassName($parent);
+            }
+        }
+        
         return $tableClassname;
     }
     
