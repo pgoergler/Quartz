@@ -180,11 +180,11 @@ class Table
         
         $check = array(
             strtolower($property),
+            strtolower(preg_replace('/(?<!^)([A-Z][a-z]|[0-9]+|(?<=[a-z0-9])[^a-z0-9]|(?<=[A-Z])[0-9_])/', '_$1', $property)),
             $property,
             "_$property",
             "_" . strtolower($property),
-            strtolower(preg_replace('/(.)([A-Z])/', '$1_$2', $property)),
-            preg_replace('/(.)([A-Z])/', '$1_$2', $property),
+            preg_replace('/(?<!^)([A-Z][a-z]|[0-9]+|(?<=[a-z0-9])[^a-z0-9]|(?<=[A-Z])[0-9_])/', '_$1', $property),
         );
 
         foreach ($check as $p)
