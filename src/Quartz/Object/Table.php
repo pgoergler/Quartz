@@ -115,7 +115,7 @@ class Table
         $this->objectClassName = $className;
     }
 
-    public function getObjectClassName()
+    public function getObjectClassName($values = array())
     {
         return $this->objectClassName;
     }
