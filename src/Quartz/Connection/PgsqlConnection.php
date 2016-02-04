@@ -227,6 +227,10 @@ class PgsqlConnection extends AbstractTransactionalConnection
 
     public function &getRaw()
     {
+        if ($this->isClosed())
+        {
+            $this->connect();
+        }
         return $this->rConnect;
     }
 
