@@ -18,6 +18,7 @@ abstract class AbstractTransactionalConnection implements Connection
     protected $converters = array();
     protected $allowedTypes = array();
     protected $transactions = array();
+    protected $closed = true;
 
     public function __construct($hostname, $user, $password, $dbname, $extra = array())
     {
@@ -26,6 +27,7 @@ abstract class AbstractTransactionalConnection implements Connection
         $this->password = $password;
         $this->dbname = $dbname;
         $this->extra = $extra;
+        $this->closed = true;
 
         $this->configure();
     }
