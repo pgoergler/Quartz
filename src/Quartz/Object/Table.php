@@ -645,7 +645,7 @@ class Table
     public function findBy($property, $value, $forUpdate = false)
     {
         $query = array(
-            $property => $this->escapeProperty($property, $value),
+            $property => $value,
         );
 
         $primary = $this->getPrimaryKeys();
