@@ -45,16 +45,27 @@ class JsonConverter implements \Quartz\Converter\Converter
                 return 'NULL';
             } else
             {
-                $json = json_encode($data);
-                if ($json !== false)
-                {
-                    return $json;
-                }
+                return $this->encodeJson($data);
             }
 
             throw new \InvalidArgumentException(sprintf("Json converter toDb() data must be an array ('%s' given).", gettype($data)));
         }
-        return "'" . preg_replace("#'#", "\\'", json_encode($data)) . "'";
+        return $this->encodeJson($data);
+    }
+    
+    public function encodeJson($data)
+    {
+        $json = json_encode($data);
+        if ($json === false)
+        {
+            throw new \InvalidArgumentException(sprintf("Json converter toDb() data must be an array ('%s' given).", gettype($data)));
+        }
+        
+        $escaped = '';
+        if( preg_match("#'#", $json) ) {
+            $escaped = 'E';
+        }
+        return "$escaped'" . preg_replace("#'#", "\\'", json_encode($data)) . "'";
     }
 
     public function translate($type, $parameter)
