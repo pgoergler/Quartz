@@ -30,10 +30,10 @@ class PgsqlConnection extends AbstractTransactionalConnection
         return $this->query('ROLLBACK;');
     }
 
-    public function close()
+    public function close($force = false)
     {
         $this->closed = true;
-        if (!$this->isPersistant && $this->rConnect)
+        if (($force || !$this->isPersistant) && $this->rConnect)
         {
             @pg_close($this->rConnect);
             $this->rConnect = null;

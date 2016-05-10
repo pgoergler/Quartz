@@ -101,11 +101,11 @@ class Quartz
         $this->connections[$name] = $connection;
     }
 
-    public function closeAll()
+    public function closeAll($force = false)
     {
         foreach ($this->connections as $conn)
         {
-            $conn->close();
+            $conn->close($force);
         }
     }
     

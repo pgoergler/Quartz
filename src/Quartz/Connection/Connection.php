@@ -12,7 +12,7 @@ interface Connection
     
     public function connect();
     
-    public function close();
+    public function close($force = false);
     
     public function isClosed();
     

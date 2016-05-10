@@ -75,10 +75,10 @@ class MysqliConnection extends AbstractTransactionalConnection
         $this->closed = false;
     }
 
-    public function close()
+    public function close($force = false)
     {
         $this->closed = true;
-        if (!$this->isPersistant)
+        if ($force || !$this->isPersistant)
         {
             $this->mysqli->close();
         }
