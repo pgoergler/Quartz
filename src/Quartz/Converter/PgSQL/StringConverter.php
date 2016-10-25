@@ -16,7 +16,7 @@ class StringConverter implements \Quartz\Converter\Converter
         {
             return null;
         }
-        $value = preg_replace('#([\'"])(.*?)([\'"])$#i', '$2', $data);
+        $value = $data;
         if (is_numeric($typeParameter) && $typeParameter > 0)
         {
             return substr($value, 0, $typeParameter);
