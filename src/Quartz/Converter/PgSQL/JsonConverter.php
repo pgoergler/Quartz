@@ -61,11 +61,11 @@ class JsonConverter implements \Quartz\Converter\Converter
             throw new \InvalidArgumentException(sprintf("Json converter toDb() data must be an array ('%s' given).", gettype($data)));
         }
         
-        $escaped = '';
-        if( preg_match("#'#", $json) ) {
-            $escaped = 'E';
-        }
-        return "$escaped'" . preg_replace("#'#", "\\'", json_encode($data)) . "'";
+        $escaped = false;
+        $jsonData = json_encode($data);
+        $jsonData = str_replace("'", "''", $jsonData);
+        $jsonData = str_replace('\\', '\\\\', $jsonData);
+        return sprintf("E'%s'", $jsonData);
     }
 
     public function translate($type, $parameter)
