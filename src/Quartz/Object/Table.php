@@ -679,7 +679,6 @@ class Table
         $pKey = $this->getPrimaryKeys();
         $query = array();
         
-        $query = array();
         foreach ($pKey as $pk)
         {
             $query[$pk] = $this->convertPropertyValueToDb($pk, $entity->get($pk));

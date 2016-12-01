@@ -650,8 +650,6 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         foreach ($this->objectsPostSave as $relation => $objects)
         {
-            $o = $objects[0];
-
             $conn = $this->getTable()->getConnection();
 
             if ($this->getTable()->hasOneRelation($relation))
@@ -669,7 +667,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $query = array(
                 $foreign => $this->get($local),
             );
-            $conn->delete($o->getTable(), $query);
+            $table = $this->getOrm()->getTable($class);
+            $conn->delete($table, $query);
             foreach ($objects as $object)
             {
                 $this->setForeignKey($relation, $object);
