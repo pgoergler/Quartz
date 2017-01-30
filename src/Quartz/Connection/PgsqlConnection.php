@@ -78,6 +78,37 @@ class PgsqlConnection extends AbstractTransactionalConnection
 
         $connect .= ' dbname=' . $this->dbname;
 
+        if (isset($this->extra['parameters']) && is_array($this->extra['parameters']))
+        {
+            foreach ($this->extra['parameters'] as $name => $value)
+            {
+                $connect .= sprintf(' %s=%s', $name, $value);
+            }
+        }
+
+        $options = array(
+            'application_name' => "php-" . getmypid() . "'"
+        );
+
+        if (isset($this->extra['options']))
+        {
+            if (is_array($this->extra['options']))
+            {
+                $options = array_merge($options, $this->extra['options']);
+            }
+        }
+
+        if (!empty($options))
+        {
+            $connect .= " options='";
+            $first = true;
+            foreach ($options as $name => $value)
+            {
+                $connect .= sprintf('--%s=%s%s', $name, $value, $first ? '' : ' ');
+                $first = false;
+            }
+            $connect .= "'";
+        }
 
         if (isset($this->extra['persistant']) && $this->extra['persistant'])
         {

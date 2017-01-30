@@ -19,39 +19,48 @@ class Dsn
      */
     public static function extract($dsn)
     {
-        if (!preg_match('#(?P<driver>[a-z]+)://(?P<user>[^:@]+)(?::(?P<password>[^@]+))?(?:@(?P<host>[\-\w\.]+|!/.+[^/]!)(?::(\w+))?)?/(?P<database>\w+)#', $dsn, $matchs))
+        $matchs = \parse_url($dsn);
+        if ($matchs === false)
         {
             throw new \Exception(sprintf('Cound not parse DSN "%s".', $dsn));
         }
 
-        if ($matchs['driver'] == null)
+        if (!isset($matchs['scheme']))
         {
             throw new \Exception(sprintf('No protocol information in dsn "%s".', $dsn));
         }
-        $driver = $matchs['driver'];
+        $driver = $matchs['scheme'];
 
-        if ($matchs['user'] == null)
+
+        if (!isset($matchs['host']))
         {
-            throw PommException(sprintf('No user information in dsn "%s".', $dsn));
+            throw new \Exception(sprintf('No host information in dsn "%s".', $dsn));
+        }
+
+        $host = $matchs['host'];
+        $port = isset($matchs['port']) ? $matchs['port'] : null;
+
+        if (!isset($matchs['user']))
+        {
+            throw new \Exception(sprintf('No user information in dsn "%s".', $dsn));
         }
         $user = $matchs['user'];
-        $pass = $matchs['password'];
+        $pass = isset($matchs['pass']) ? $matchs['pass'] : null;
 
-        if (preg_match('/!(.*)!/', $matchs['host'], $host_matchs))
-        {
-            $host = $host_matchs[1];
-        } else
-        {
-            $host = $matchs['host'];
-        }
-
-        $port = $matchs[5];
-
-        if ($matchs['database'] == null)
+        if (!isset($matchs['path']))
         {
             throw new \Exception(sprintf('No database name in dsn "%s".', $dsn));
         }
-        $database = $matchs['database'];
+
+        if (preg_match('#^/(.*?)$#', $matchs['path'], $m))
+        {
+            $database = $m[1];
+        } else
+        {
+            $database = $m['path'];
+        }
+        $parameters = array();
+        isset($matchs['query']) ? \parse_str($matchs['query'], $parameters) : false;
 
         return array(
             'driver' => $driver,
@@ -59,6 +68,7 @@ class Dsn
             'user' => $user,
             'password' => $pass,
             'database' => $database,
+            'parameters' => $parameters
         );
     }
 

@@ -197,6 +197,7 @@ class Quartz
 
         $extra = array_merge($extra, array(
             'persistant' => isset($configuration['persistant']) ? $configuration['persistant'] : false,
+            'parameters' => $config['parameters']
         ));
 
         return array(
