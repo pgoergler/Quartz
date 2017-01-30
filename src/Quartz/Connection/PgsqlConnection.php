@@ -87,7 +87,7 @@ class PgsqlConnection extends AbstractTransactionalConnection
         }
 
         $options = array(
-            'application_name' => "php-" . getmypid() . "'"
+            'application_name' => "php-" . getmypid()
         );
 
         if (isset($this->extra['options']))
