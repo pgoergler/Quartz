@@ -127,27 +127,6 @@ class PgsqlConnection extends AbstractTransactionalConnection
         $this->closed = false;
     }
 
-    public function convertType($type)
-    {
-        $rootType = $type;
-        $parameter = '';
-        $arraySize = false;
-        if (preg_match('#^(?P<type>.*?)(\((?P<parameter>.*?)\))?(?P<array>\[(?P<array_size>.*?)\])?$#', $rootType, $m))
-        {
-            $rootType = $m['type'];
-            $parameter = array_key_exists('parameter', $m) ? $m['parameter'] : '';
-            $array = array_key_exists('array', $m);
-            $arraySize = $array ? ($m['array_size'] ? : null) : false;
-        }
-        switch ($rootType)
-        {
-            case 'string':
-                return array('varchar', $parameter, $arraySize);
-            default:
-                return array(\strtolower($rootType), $parameter, $arraySize);
-        }
-    }
-
     public function countRows($resource)
     {
         if ($resource && is_resource($resource))

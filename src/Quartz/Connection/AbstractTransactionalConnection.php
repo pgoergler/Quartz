@@ -162,22 +162,26 @@ abstract class AbstractTransactionalConnection implements Connection
 
     protected abstract function rollbackImplementation();
 
-    public function extractType($type)
+    public function convertType($type)
     {
-        if (preg_match('#^([a-z0-9_\.-]+)$#i', $type, $matchs))
+        $type = \strtolower($type);
+        $rootType = $type;
+        $parameter = '';
+        $arraySize = false;
+        if (preg_match('#^(?P<type>.*?)(\((?P<parameter>.*?)\))?(?P<array>\[(?P<array_size>.*?)\])?$#', $rootType, $m))
         {
-            return $matchs[1];
-        } else if (preg_match('#^([a-z0-9_\.-]+)\[(.*?)\]$#i', $type, $matchs))
-        {
-            return 'Array';
-        } else if (preg_match('#^([a-z0-9_\.-]+)\((.*?)\)$#i', $type, $matchs))
-        {
-            return $matchs[1];
-        } else
-        {
-            
+            $rootType = $m['type'];
+            $parameter = array_key_exists('parameter', $m) ? $m['parameter'] : '';
+            $array = array_key_exists('array', $m);
+            $arraySize = $array ? ($m['array_size'] ?: null) : false;
         }
-        return $type;
+        switch ($rootType)
+        {
+            case 'string':
+                return array('varchar', $parameter, $arraySize);
+            default:
+                return array($rootType, $parameter, $arraySize);
+        }
     }
 
     protected function getTypeFromValue($value)
@@ -230,18 +234,47 @@ abstract class AbstractTransactionalConnection implements Connection
         return 'string';
     }
 
-    public function convertFromDb($value, $type = null)
+    public function convertFromDb($value, $type)
     {
-        $rootType = $this->extractType($type);
-        $converter = $this->getConverterForType($rootType);
-        return $converter->fromDb($value, $type, null);
+        list($typeClean, $typeParameter, $arraySize) = $this->convertType($type);
+        $logger = \Logging\LoggersManager::getInstance()->get();
+        
+        $logger->debug("clean:{}, param:{}, array:{}", [$typeClean, $typeParameter, $arraySize]);
+        if( $arraySize !== false )
+        {
+            $elementConverter = $this->getConverterForType($typeClean);
+            $convertFn = function($value) use (&$elementConverter, $typeClean, $typeParameter) {
+                return $elementConverter->fromDb($value, $typeClean, $typeParameter);
+            };
+            $converter = $this->getConverterFor('Array');
+            return $converter->fromDb($value, $typeClean, array(
+                'size' => $arraySize,
+                'converter' => $convertFn
+            ));
+        }
+        
+        $converter = $this->getConverterForType($typeClean);
+        return $converter->fromDb($value, $typeClean, $typeParameter);
     }
 
-    public function convertToDb($value, $type = null)
+    public function convertToDb($value, $type)
     {
-        $rootType = $this->extractType($type);
-        $converter = $this->getConverterForType($rootType);
-        return $converter->toDb($value, $type, null);
+        list($typeClean, $typeParameter, $arraySize) = $this->convertType($type);
+        if( $arraySize !== false )
+        {
+            $elementConverter = $this->getConverterForType($typeClean);
+            $convertFn = function($value) use (&$elementConverter, $typeClean, $typeParameter) {
+                return $elementConverter->toDb($value, $typeClean, $typeParameter);
+            };
+            $converter = $this->getConverterFor('Array');
+            return $converter->toDb($value, $typeClean, array(
+                'size' => $arraySize,
+                'converter' => $convertFn
+            ));
+        }
+        
+        $converter = $this->getConverterForType($typeClean);
+        return $converter->toDb($value, $typeClean, $typeParameter);
     }
 
 }
