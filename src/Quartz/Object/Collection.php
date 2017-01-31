@@ -15,6 +15,8 @@ class Collection implements \Iterator, \Countable
     protected $result;
     protected $position = 0;
     protected $numRows;
+    
+    protected $parameters = array();
 
     public function __construct(\Quartz\Connection\Connection &$connection, $result)
     {
@@ -184,5 +186,32 @@ class Collection implements \Iterator, \Countable
     {
         $this->filters = array();
     }
+    
+    public function getParameters()
+    {
+        return $this->parameters;
+    }
+    
+    public function setParameters(array $parameters)
+    {
+        $this->parameters = $parameters;
+        return $this;
+    }
+    
+    public function getParameter($key, $defaultValue = null)
+    {
+        $extra = $this->getParameters();
+        if (is_array($extra) && array_key_exists($key, $extra))
+        {
+            return $extra[$key];
+        }
+        return $defaultValue;
+    }
 
+    public function setParameter($key, $value)
+    {
+        $extra = $this->getParameters();
+        $extra[$key] = $value;
+        return $this->setParameters($extra);
+    }
 }
