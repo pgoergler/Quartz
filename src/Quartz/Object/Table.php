@@ -715,5 +715,47 @@ class Table
     {
         return $this->getConnection()->drop($this, $cascade);
     }
+    
+    public function convertOrderToSql($order)
+    {
+        $orderby = null;
+        if (!is_null($order))
+        {
+            if (is_array($order))
+            {
+                $sorted = array();
+                foreach ($order as $k => $sort)
+                {
+                    $sorted[] = $k . ( ($sort === 1) ? ' ASC' : ' DESC');
+                }
+                $orderby = implode(', ', $sorted);
+            } else
+            {
+                $orderby = $order;
+            }
+        }
+        return $orderby;
+    }
+    
+    public function convertCriteriaToSql(array $criteria)
+    {
+        $where = array();
+        $conn = $this->getConnection();
+        foreach ($criteria as $k => $v)
+        {
+            if (is_int($k))
+            {
+                $where[] = $v;
+            } else
+            {
+                $type = $this->getPropertyType($k);
+                $where[] = $conn->escapeField($k) . ' = ' . $conn->convertToDb($v, $type);
+            }
+        }
+        
+        return implode(' AND ', $where);
+    }
+    
+    
 
 }

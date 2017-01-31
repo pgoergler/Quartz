@@ -325,40 +325,14 @@ class PgsqlConnection extends AbstractTransactionalConnection
 
     public function find($table, array $criteria = array(), $order = null, $limit = null, $offset = 0, $forUpdate = false)
     {
-        $orderby = null;
-        if (!is_null($order))
-        {
-            if (is_array($order))
-            {
-                $sorted = array();
-                foreach ($order as $k => $sort)
-                {
-                    $sorted[] = $k . ( ($sort === 1) ? ' ASC' : ' DESC');
-                }
-                $orderby = implode(', ', $sorted);
-            } else
-            {
-                $orderby = $order;
-            }
-        }
+        $orderby = $table->convertOrderToSql($order);
 
-        $where = array();
-        foreach ($criteria as $k => $v)
-        {
-            if (is_int($k))
-            {
-                $where[] = $v;
-            } else
-            {
-                $type = $table->getPropertyType($k);
-                $where[] = $this->escapeField($k) . ' = ' . $this->convertToDb($v, $type);
-            }
-        }
+        $where = $table->convertCriteriaToSql($criteria);
 
         $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
 
         $query = 'SELECT * FROM ' . $tableName
-                . (empty($where) ? '' : ' WHERE ' . implode(' AND ', $where) )
+                . (empty($where) ? '' : ' WHERE ' . $where )
                 . (is_null($orderby) || empty($orderby) ? '' : ' ORDER BY ' . $orderby )
                 . (is_null($limit) ? '' : ' LIMIT ' . $limit . (is_null($offset) ? '' : ' OFFSET ' . ($offset * $limit)));
 
