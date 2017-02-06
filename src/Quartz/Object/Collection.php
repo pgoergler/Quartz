@@ -16,7 +16,19 @@ class Collection implements \Iterator, \Countable
     protected $position = 0;
     protected $numRows;
     
+    protected $schema = array();
+    protected $schemaConverterRegistered = false;
+    
     protected $parameters = array();
+    
+    public static function of(\Quartz\Connection\Connection &$connection, $sqlQuery, $factory = null)
+    {
+        if( is_callable($factory) )
+        {
+            return $factory($connection, $connection->query($sqlQuery));
+        }
+        return new self($connection, $connection->query($sqlQuery));
+    }
 
     public function __construct(\Quartz\Connection\Connection &$connection, $result)
     {
@@ -213,5 +225,98 @@ class Collection implements \Iterator, \Countable
         $extra = $this->getParameters();
         $extra[$key] = $value;
         return $this->setParameters($extra);
+    }
+    
+    public function getSchema()
+    {
+        return $this->schema;
+    }
+    
+    public function values()
+    {
+        $values = array();
+        foreach($this as $key => $value)
+        {
+            $values[$key] = $value;
+        }
+        return $values;
+    }
+    
+    /**
+     * 
+     * @param type $key
+     * @param type $type
+     * @param type $defaultValue
+     * @return \Database\Quartz\Collection
+     */
+    public function column($key, $type, $defaultValue = null)
+    {
+        if (is_string($type))
+        {
+            $isVirtual = false;
+            $converter = function($row) use(&$key, &$type, &$defaultValue)
+            {
+                if (!array_key_exists($key, $row))
+                {
+                    return $defaultValue;
+                }
+                return $this->connection->convertColumnFromDb($row[$key], $type);
+            };
+            $processor = $converter->bindTo($this);
+        } elseif (is_callable($type))
+        {
+            $isVirtual = true;
+            $processor = $type instanceof \Closure ? $type->bindTo($this) : $type;
+            $type = 'virtual';
+        } else
+        {
+            trigger_error('Second argument must be a sql type name or a function($row)', E_USER_ERROR);
+        }
+        $this->schema[$key] = array(
+            'type' => $type,
+            'processor' => $processor,
+            'virtual' => $isVirtual,
+            'default' => $defaultValue
+        );
+        $this->registerSchemaConverter();
+        return $this;
+    }
+
+    public function removecColumn($key)
+    {
+        if (array_key_exists($key, $this->schema))
+        {
+            unset($this->schema[$key]);
+        }
+        return $this;
+    }
+
+    public function getDefaultRow()
+    {
+        $defaultRow = array();
+        foreach ($this->schema as $key => $conf)
+        {
+            $defaultRow[$key] = $conf['default'];
+        }
+        return $defaultRow;
+    }
+
+    protected function registerSchemaConverter()
+    {
+        if (!$this->schemaConverterRegistered)
+        {
+            $filter = function($row)
+            {
+                foreach ($this->getSchema() as $key => $conf)
+                {
+                    $processor = $conf['processor'];
+                    $row[$key] = $processor($row);
+                }
+                return $row;
+            };
+
+            $this->registerFilter($filter->bindTo($this));
+            $this->schemaConverterRegistered = true;
+        }
     }
 }
