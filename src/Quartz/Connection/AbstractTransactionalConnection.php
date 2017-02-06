@@ -173,7 +173,7 @@ abstract class AbstractTransactionalConnection implements Connection
             $rootType = $m['type'];
             $parameter = array_key_exists('parameter', $m) ? $m['parameter'] : '';
             $array = array_key_exists('array', $m);
-            $arraySize = $array ? ($m['array_size'] ?: null) : false;
+            $arraySize = $array ? ($m['array_size'] ? : null) : false;
         }
         switch ($rootType)
         {
@@ -238,21 +238,22 @@ abstract class AbstractTransactionalConnection implements Connection
     {
         list($typeClean, $typeParameter, $arraySize) = $this->convertType($type);
         $logger = \Logging\LoggersManager::getInstance()->get();
-        
+
         $logger->debug("clean:{}, param:{}, array:{}", [$typeClean, $typeParameter, $arraySize]);
-        if( $arraySize !== false )
+        if ($arraySize !== false)
         {
             $elementConverter = $this->getConverterForType($typeClean);
-            $convertFn = function($value) use (&$elementConverter, $typeClean, $typeParameter) {
+            $convertFn = function($value) use (&$elementConverter, $typeClean, $typeParameter)
+            {
                 return $elementConverter->fromDb($value, $typeClean, $typeParameter);
             };
             $converter = $this->getConverterFor('Array');
             return $converter->fromDb($value, $typeClean, array(
-                'size' => $arraySize,
-                'converter' => $convertFn
+                        'size' => $arraySize,
+                        'converter' => $convertFn
             ));
         }
-        
+
         $converter = $this->getConverterForType($typeClean);
         return $converter->fromDb($value, $typeClean, $typeParameter);
     }
@@ -260,19 +261,20 @@ abstract class AbstractTransactionalConnection implements Connection
     public function convertToDb($value, $type)
     {
         list($typeClean, $typeParameter, $arraySize) = $this->convertType($type);
-        if( $arraySize !== false )
+        if ($arraySize !== false)
         {
             $elementConverter = $this->getConverterForType($typeClean);
-            $convertFn = function($value) use (&$elementConverter, $typeClean, $typeParameter) {
+            $convertFn = function($value) use (&$elementConverter, $typeClean, $typeParameter)
+            {
                 return $elementConverter->toDb($value, $typeClean, $typeParameter);
             };
             $converter = $this->getConverterFor('Array');
             return $converter->toDb($value, $typeClean, array(
-                'size' => $arraySize,
-                'converter' => $convertFn
+                        'size' => $arraySize,
+                        'converter' => $convertFn
             ));
         }
-        
+
         $converter = $this->getConverterForType($typeClean);
         return $converter->toDb($value, $typeClean, $typeParameter);
     }

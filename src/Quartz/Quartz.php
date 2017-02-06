@@ -9,7 +9,7 @@ namespace Quartz;
  */
 class Quartz
 {
-    
+
     const NONE = 0;
     const EXIST = 1;
     const MODIFIED = 2;
@@ -23,7 +23,7 @@ class Quartz
     {
         
     }
-    
+
     public function isInitialized()
     {
         return $this->initialized;
@@ -45,7 +45,6 @@ class Quartz
     {
         return $this->configs;
     }
-
 
     /**
      *
@@ -108,28 +107,29 @@ class Quartz
             $conn->close($force);
         }
     }
-    
+
     public function getTableClassNameFromEntityClassName($className)
     {
-        if(is_callable(array($className, 'getTableClassName')) )
+        if (is_callable(array($className, 'getTableClassName')))
         {
             $tableClassname = $className::getTableClassName();
-        }
-        else
+        } else
         {
             $tableClassname = preg_replace('#^(.*)\\\(.*?)$#i', '${1}\\\Table\\\${2}', $className) . 'Table';
         }
-        
-        if( !class_exists($tableClassname) ) {
+
+        if (!class_exists($tableClassname))
+        {
             $parent = get_parent_class($className);
-            if( $parent !== false ) {
+            if ($parent !== false)
+            {
                 return $this->getTableClassNameFromEntityClassName($parent);
             }
         }
-        
+
         return $tableClassname;
     }
-    
+
     /**
      *
      * @param string $className
@@ -139,7 +139,7 @@ class Quartz
     {
         if (!$this->hasTable($className))
         {
-            $tableClass= $this->getTableClassNameFromEntityClassName($className);
+            $tableClass = $this->getTableClassNameFromEntityClassName($className);
             $table = new $tableClass($conn);
             $table->setObjectClassName($className);
             $this->setTable($className, $table);

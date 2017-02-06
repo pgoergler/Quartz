@@ -165,7 +165,8 @@ class Table
         }
 
         $this->properties[$property] = $conf;
-        $camelCase = preg_replace_callback('#(^|_)(.)#', function($matches){
+        $camelCase = preg_replace_callback('#(^|_)(.)#', function($matches)
+        {
             return strtoupper($matches[2]);
         }, $property);
         $this->mappedProperty[$camelCase] = $property;
@@ -173,11 +174,11 @@ class Table
 
     public function getRealPropertyName($property)
     {
-        if( isset($this->mappedProperty[$property]) )
+        if (isset($this->mappedProperty[$property]))
         {
             return $this->mappedProperty[$property];
         }
-        
+
         $check = array(
             strtolower($property),
             strtolower(preg_replace('/(?<!^)([A-Z][a-z]|[0-9]+|(?<=[a-z0-9])[^a-z0-9]|(?<=[A-Z])[0-9_])/', '_$1', $property)),
@@ -229,7 +230,7 @@ class Table
         }
         return null;
     }
-    
+
     public function getPropertyTypeParameter($property)
     {
         if ($this->hasProperty($property))
@@ -238,7 +239,7 @@ class Table
         }
         return null;
     }
-    
+
     public function isPropertyArray($property)
     {
         if ($this->hasProperty($property))
@@ -247,7 +248,7 @@ class Table
         }
         return false;
     }
-    
+
     public function getPropertyTypeArraySize($property)
     {
         if ($this->hasProperty($property) && $this->isPropertyArray($property))
@@ -464,10 +465,11 @@ class Table
             {
                 $type = $this->getPropertyType($property);
                 $typeParameter = $this->getPropertyTypeParameter($property);
-                if( $this->isPropertyArray($property) )
+                if ($this->isPropertyArray($property))
                 {
                     $elementConverter = $this->getConnection()->getConverterForType($type);
-                    $convertFn = function($value) use (&$elementConverter, $type, $typeParameter) {
+                    $convertFn = function($value) use (&$elementConverter, $type, $typeParameter)
+                    {
                         return $elementConverter->fromDb($value, $type, $typeParameter);
                     };
                     $converter = $this->getConnection()->getConverterFor('Array');
@@ -485,7 +487,7 @@ class Table
         }
 
         $className = $this->getObjectClassName($values);
-        if( is_null($entity) )
+        if (is_null($entity))
         {
             $entity = new $className();
         }
@@ -499,10 +501,11 @@ class Table
     {
         $type = $this->getPropertyType($property);
         $typeParameter = $this->getPropertyTypeParameter($property);
-        if( $this->isPropertyArray($property) )
+        if ($this->isPropertyArray($property))
         {
             $elementConverter = $this->getConnection()->getConverterForType($type);
-            $convertFn = function($value) use (&$elementConverter, $type, $typeParameter) {
+            $convertFn = function($value) use (&$elementConverter, $type, $typeParameter)
+            {
                 return $elementConverter->toDb($value, $type, $typeParameter);
             };
             $converter = $this->getConnection()->getConverterFor('Array');
@@ -529,8 +532,8 @@ class Table
                 {
                     continue;
                 }
-                
-                if( in_array($this->getPropertyType($property), array('sequence', 'bigsequence', 'serial', 'bigserial')) && is_null($value) )
+
+                if (in_array($this->getPropertyType($property), array('sequence', 'bigsequence', 'serial', 'bigserial')) && is_null($value))
                 {
                     continue;
                 }
@@ -574,7 +577,7 @@ class Table
         if ($entity->isNew())
         {
             $collection = $conn->insert($this, $this->convertToDb($entity), $returning);
-            if( $collection->count() )
+            if ($collection->count())
             {
                 $newObj = $this->convertFromDb($collection->current(), $entity);
             }
@@ -591,9 +594,9 @@ class Table
                 }
 
                 $values = $this->convertToDb($entity->getValuesUpdated());
-                
+
                 $collection = $conn->update($this->getName(), $query, $values, $returning);
-                if( $collection->count() )
+                if ($collection->count())
                 {
                     $newObj = $this->convertFromDb($collection->current(), $entity);
                 }
@@ -678,22 +681,21 @@ class Table
     {
         $pKey = $this->getPrimaryKeys();
         $query = array();
-        
+
         foreach ($pKey as $pk)
         {
             $query[$pk] = $this->convertPropertyValueToDb($pk, $entity->get($pk));
         }
-        
+
         $conn = $this->getConnection();
         $conn->delete($this->getName(), $query);
         return $entity;
     }
 
-    
-    /*public function delete(array $criteria = array(), array $options = array())
-    {
-        return $this->getConnection()->delete($this, $criteria, $options);
-    }*/
+    /* public function delete(array $criteria = array(), array $options = array())
+      {
+      return $this->getConnection()->delete($this, $criteria, $options);
+      } */
 
     public function escapeProperty($property, $value)
     {
@@ -715,7 +717,7 @@ class Table
     {
         return $this->getConnection()->drop($this, $cascade);
     }
-    
+
     public function convertOrderToSql($order)
     {
         $orderby = null;
@@ -736,7 +738,7 @@ class Table
         }
         return $orderby;
     }
-    
+
     public function convertCriteriaToSql(array $criteria)
     {
         $where = array();
@@ -752,10 +754,8 @@ class Table
                 $where[] = $conn->escapeField($k) . ' = ' . $conn->convertToDb($v, $type);
             }
         }
-        
+
         return implode(' AND ', $where);
     }
-    
-    
 
 }

@@ -16,7 +16,7 @@ class TimestampConverter implements \Quartz\Converter\Converter
         {
             return null;
         }
-        if( !is_null($type) )
+        if (!is_null($type))
         {
             return new \DateTime(preg_replace('#^\'(.*?)\'$#', '$1', $data));
         }
@@ -25,25 +25,24 @@ class TimestampConverter implements \Quartz\Converter\Converter
 
     public function toDb($data, $type, $typeParameter)
     {
-        if( is_null($data) )
+        if (is_null($data))
         {
             return 'NULL';
         }
-        
+
         $tz = ( $typeParameter && is_string($typeParameter)) ? new \DateTimeZone($typeParameter) : null;
         if (!$data instanceof \DateTime)
         {
-            if(is_numeric($data))
+            if (is_numeric($data))
             {
                 $data = new \DateTime('@' . $data, $tz);
-            }
-            else
+            } else
             {
                 $data = new \DateTime($data, $tz);
             }
         }
 
-        if( $tz )
+        if ($tz)
         {
             return sprintf("%s '%s'", 'timestamp', $data->setTimezone($tz)->format('Y-m-d H:i:s.u'));
         }

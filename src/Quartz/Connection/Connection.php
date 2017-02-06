@@ -8,52 +8,53 @@ namespace Quartz\Connection;
  */
 interface Connection
 {
+
     public function getDatabaseName();
-    
+
     public function connect();
-    
+
     public function close($force = false);
-    
+
     public function isClosed();
-    
+
     public function &getRaw();
-    
+
     public function query($query, $parameters = array());
-    
+
     public function error();
-    
+
     public function errorCode();
-    
+
     public function begin();
-    
+
     public function commit();
-    
+
     public function rollback($force = false);
-    
+
     public function savepoint($savepoint);
-    
+
     public function commitSavepoint($savepoint);
-    
+
     public function rollbackSavepoint($savepoint);
-    
+
     public function fetchRow($resource, $index = null);
-    
+
     public function free($resource);
-    
+
     public function countRows($resource);
-    
+
     public function escapeField($field);
-    
+
     public function escape($value, $type = 'string');
-    
+
     public function escapeBinary($value);
-    
+
     public function escapeString($value);
-    
+
     public function escapeNumber($value, $type = 'integer');
-    
+
     public function convertType($type);
-    
+
     /**
      * registerConverter
      *
@@ -65,7 +66,7 @@ interface Connection
      * @return Quartz\Connection\Connection
      */
     public function registerConverter($name, \Quartz\Converter\Converter $converter, array $types = array());
-    
+
     /**
      * getConverterFor
      *
@@ -76,7 +77,7 @@ interface Connection
      * @return \Quartz\Converter\Converter Converter instance.
      * */
     public function getConverterFor($name);
-    
+
     /**
      * getConverterForType
      *
@@ -101,11 +102,11 @@ interface Connection
      * @return Quartz\Connection\Connection
      * */
     public function registerTypeForConverter($type, $converter_name);
-    
+
     public function create(\Quartz\Object\Table $table);
-    
+
     public function drop(\Quartz\Object\Table $table, $cascade = false);
-    
+
     /**
      * 
      * @param type $table
@@ -144,8 +145,8 @@ interface Connection
      * @return \Quartz\Object\Collection
      */
     public function find($table, array $criteria = array(), $order = null, $limit = null, $offset = 0, $forUpdate = false);
-    
+
     public function convertFromDb($value, $type);
-    
+
     public function convertToDb($value, $type);
 }

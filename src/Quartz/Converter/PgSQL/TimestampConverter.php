@@ -9,18 +9,18 @@ namespace Quartz\Converter\PgSQL;
  */
 class TimestampConverter implements \Quartz\Converter\Converter
 {
-    
+
     protected function isNullFromDb($data)
     {
         return ($data === 'NULL' || $data === 'null' || $data === null || $data === '');
     }
-    
+
     protected function buildDatetime($data, $timezone = null)
     {
         if (is_numeric($data))
         {
             return new \DateTime('@' . $data, $timezone);
-        } elseif( is_array($data) && array_key_exists('date', $data) && array_key_exists('timezone', $data))
+        } elseif (is_array($data) && array_key_exists('date', $data) && array_key_exists('timezone', $data))
         {
             return new \DateTime($data['date'], new \DateTimeZone($data['timezone']));
         } else
@@ -57,7 +57,7 @@ class TimestampConverter implements \Quartz\Converter\Converter
             $data = $this->buildDatetime($data, $tz);
         }
 
-        if( $tz )
+        if ($tz)
         {
             return $this->translateToDb($data->setTimezone($tz));
         }
@@ -68,7 +68,7 @@ class TimestampConverter implements \Quartz\Converter\Converter
     {
         return sprintf("%s '%s'", 'timestamp', $data->format('Y-m-d H:i:s.u'));
     }
-    
+
     public function translate($type, $parameter)
     {
         $array = '';

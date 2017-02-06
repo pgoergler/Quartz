@@ -38,10 +38,10 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $this->values[$property] = $table->getDefaultValue($property);
         }
     }
-    
+
     public static function getTableClassName()
     {
-        if( isset(static::$tableClassName) && !is_null(static::$tableClassName) )
+        if (isset(static::$tableClassName) && !is_null(static::$tableClassName))
         {
             return static::$tableClassName;
         }
@@ -52,7 +52,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         return (boolean) !($this->status & \Quartz\Quartz::EXIST);
     }
-    
+
     public function isModified()
     {
         return (boolean) ($this->status & \Quartz\Quartz::MODIFIED);
@@ -61,24 +61,22 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     public function setNew($boolean)
     {
         $this->isNew = $boolean;
-        if( $boolean )
+        if ($boolean)
         {
             $this->status = $this->status & (0xff ^ \Quartz\Quartz::EXIST);
-        }
-        else
+        } else
         {
             $this->status = $this->status | \Quartz\Quartz::EXIST;
         }
         return $this;
     }
-    
+
     public function setModified($boolean)
     {
-        if( $boolean )
+        if ($boolean)
         {
             $this->status = $this->status | \Quartz\Quartz::MODIFIED;
-        }
-        else
+        } else
         {
             $this->status = $this->status & (0xff ^ \Quartz\Quartz::MODIFIED);
         }
@@ -89,7 +87,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
     {
         return (boolean) ($this->status & \Quartz\Quartz::EXIST);
     }
-    
+
     public function __clone()
     {
         $this->setNew(true);
@@ -199,13 +197,13 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
         if ($newValue !== $oldValue)
         {
-            if( !array_key_exists($property, $this->oldValues) )
+            if (!array_key_exists($property, $this->oldValues))
             {
                 $this->oldValues[$property] = $this->values[$property];
             }
             $this->values[$property] = $value;
             $this->valuesUpdated[$property] = $value;
-            
+
             $this->setModified(true);
         }
         return $this;
@@ -266,7 +264,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
         {
             if (in_array($value, $this->values[$property]))
             {
-                if( !array_key_exists($property, $this->oldValues))
+                if (!array_key_exists($property, $this->oldValues))
                 {
                     $this->oldValues[$property] = $this->values[$property];
                 }
@@ -282,7 +280,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
                 $this->values[$property] = $new;
                 $this->valuesUpdated[$property] = $this->values[$property];
-                
+
                 $this->status = $this->status | \Quartz\Quartz::MODIFIED;
             }
         }
@@ -510,7 +508,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
 
             if ($one)
             {
-                if( ! $objs->isEmpty() )
+                if (!$objs->isEmpty())
                 {
                     $obj = $objs->current();
                     if ($obj)
@@ -585,10 +583,10 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
         }
         return $this;
     }
-    
+
     public function hydrate($values)
     {
-        foreach($values as $key => $value)
+        foreach ($values as $key => $value)
         {
             $this->set($key, $value);
         }

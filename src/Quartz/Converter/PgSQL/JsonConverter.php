@@ -52,7 +52,7 @@ class JsonConverter implements \Quartz\Converter\Converter
         }
         return $this->encodeJson($data);
     }
-    
+
     public function encodeJson($data)
     {
         $json = json_encode($data);
@@ -60,7 +60,7 @@ class JsonConverter implements \Quartz\Converter\Converter
         {
             throw new \InvalidArgumentException(sprintf("Json converter toDb() data must be an array ('%s' given).", gettype($data)));
         }
-        
+
         $escaped = false;
         $jsonData = json_encode($data);
         $jsonData = str_replace("'", "''", $jsonData);

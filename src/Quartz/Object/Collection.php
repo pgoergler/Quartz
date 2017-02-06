@@ -15,15 +15,13 @@ class Collection implements \Iterator, \Countable
     protected $result;
     protected $position = 0;
     protected $numRows;
-    
     protected $schema = array();
     protected $schemaConverterRegistered = false;
-    
     protected $parameters = array();
-    
+
     public static function of(\Quartz\Connection\Connection &$connection, $sqlQuery, $factory = null)
     {
-        if( is_callable($factory) )
+        if (is_callable($factory))
         {
             return $factory($connection, $connection->query($sqlQuery));
         }
@@ -138,11 +136,11 @@ class Collection implements \Iterator, \Countable
 
     public function get($index)
     {
-        if( !$this->result || $this->count() === 0 || !$this->has($index))
+        if (!$this->result || $this->count() === 0 || !$this->has($index))
         {
             return false;
         }
-        
+
         $values = $this->connection->fetchRow($this->result, $index);
 
         if ($values === false)
@@ -157,7 +155,7 @@ class Collection implements \Iterator, \Countable
 
         return $values;
     }
-    
+
     /**
      * has
      *
@@ -170,7 +168,6 @@ class Collection implements \Iterator, \Countable
     {
         return $index < $this->count();
     }
-
 
     /**
      * registerFilter
@@ -198,18 +195,18 @@ class Collection implements \Iterator, \Countable
     {
         $this->filters = array();
     }
-    
+
     public function getParameters()
     {
         return $this->parameters;
     }
-    
+
     public function setParameters(array $parameters)
     {
         $this->parameters = $parameters;
         return $this;
     }
-    
+
     public function getParameter($key, $defaultValue = null)
     {
         $extra = $this->getParameters();
@@ -226,22 +223,22 @@ class Collection implements \Iterator, \Countable
         $extra[$key] = $value;
         return $this->setParameters($extra);
     }
-    
+
     public function getSchema()
     {
         return $this->schema;
     }
-    
+
     public function values()
     {
         $values = array();
-        foreach($this as $key => $value)
+        foreach ($this as $key => $value)
         {
             $values[$key] = $value;
         }
         return $values;
     }
-    
+
     /**
      * 
      * @param type $key
@@ -319,4 +316,5 @@ class Collection implements \Iterator, \Countable
             $this->schemaConverterRegistered = true;
         }
     }
+
 }

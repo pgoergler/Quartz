@@ -9,6 +9,7 @@ namespace Quartz\Converter;
  */
 interface Converter
 {
+
     /**
      * fromDb
      *
@@ -18,7 +19,7 @@ interface Converter
      * @param $data String  Input string from Db row result.
      * @param $type String  Optional type.
      * @return Mixed PHP respresentation of the data.
-     **/
+     * */
     public function fromDb($data, $type, $typeParameter);
 
     /**
@@ -29,14 +30,13 @@ interface Converter
      * @param $data Mixed   PHP representation.
      * @param $type String  Optional type.
      * @return String Db converted string for input.
-     **/
+     * */
     public function toDb($data, $type, $typeParameter);
-    
-    /** 
+
+    /**
      *
      * Return the SQL data type
      * 
      */
-    
     public function translate($type, $parameter);
 }

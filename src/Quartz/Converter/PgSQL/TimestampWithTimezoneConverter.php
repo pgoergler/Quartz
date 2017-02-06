@@ -9,7 +9,7 @@ namespace Quartz\Converter\PgSQL;
  */
 class TimestampWithTimezoneConverter extends TimestampConverter
 {
-    
+
     protected function translateToDb($data)
     {
         return sprintf("%s '%s'", 'timestamp with time zone', $data->format('Y-m-d H:i:s.uP'));

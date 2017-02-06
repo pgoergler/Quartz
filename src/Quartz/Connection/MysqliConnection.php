@@ -9,11 +9,12 @@ namespace Quartz\Connection;
  */
 class MysqliConnection extends AbstractTransactionalConnection
 {
+
     protected $mysqli;
     protected $rLastQuery;
     protected $sLastQuery;
     protected $isPersistant = false;
-    
+
     protected function beginImplementation()
     {
         return $this->query('START TRANSACTION;');
@@ -62,7 +63,7 @@ class MysqliConnection extends AbstractTransactionalConnection
         try
         {
             $this->mysqli = new \mysqli($host, $this->user, $this->password, $this->dbname, $port);
-        } catch( \Exception $e)
+        } catch (\Exception $e)
         {
             throw new \RuntimeException("CONNECTION ERROR To(" . $this->hostname . ") : " . $this->error());
         }
@@ -93,7 +94,7 @@ class MysqliConnection extends AbstractTransactionalConnection
         $this->registerConverter('Timestamp', new \Quartz\Converter\MySQL\TimestampConverter(), array('timestamp', 'date', 'time', 'datetime', 'unixtime'));
         $this->registerConverter('HStore', new \Quartz\Converter\MySQL\HStoreConverter(), array('hstore'));
     }
-    
+
     public function convertType($type)
     {
         $type = \strtolower($type);
@@ -105,7 +106,7 @@ class MysqliConnection extends AbstractTransactionalConnection
             $rootType = $m['type'];
             $parameter = array_key_exists('parameter', $m) ? $m['parameter'] : '';
             $array = array_key_exists('array', $m);
-            $arraySize = $array ? ($m['array_size'] ?: null) : false;
+            $arraySize = $array ? ($m['array_size'] ? : null) : false;
         }
         switch ($rootType)
         {
@@ -115,10 +116,10 @@ class MysqliConnection extends AbstractTransactionalConnection
                 return array($rootType, $parameter, $arraySize);
         }
     }
-    
+
     public function countRows($resource)
     {
-        if( $resource && $resource instanceof \mysqli_result)
+        if ($resource && $resource instanceof \mysqli_result)
         {
             return \mysqli_num_rows($resource);
         }
@@ -187,7 +188,7 @@ class MysqliConnection extends AbstractTransactionalConnection
         $tableName = ($tableName instanceof \Quartz\Object\Table) ? $tableName->getName() : $tableName;
         $query = 'DELETE FROM ' . $tableName . ((count($where) > 0) ? ' WHERE ' . implode(' AND ', $where) : '' ) . ";";
         $this->query($query);
-        
+
         return null;
     }
 
@@ -199,10 +200,10 @@ class MysqliConnection extends AbstractTransactionalConnection
 
     public function error()
     {
-        if( $this->mysqli && \mysqli_connect_error() ){
+        if ($this->mysqli && \mysqli_connect_error())
+        {
             return \mysqli_connect_error();
-        }
-        elseif( $this->mysqli && \mysqli_error($this->mysqli) )
+        } elseif ($this->mysqli && \mysqli_error($this->mysqli))
         {
             return \mysqli_error($this->mysqli);
         }
@@ -210,7 +211,8 @@ class MysqliConnection extends AbstractTransactionalConnection
 
     public function errorCode()
     {
-        if( \mysqli_connect_error() ){
+        if (\mysqli_connect_error())
+        {
             return \mysqli_connect_error();
         }
         return \mysqli_error($this->mysqli);
@@ -234,7 +236,7 @@ class MysqliConnection extends AbstractTransactionalConnection
 
     public function escapeString($value)
     {
-        if( $this->isClosed() )
+        if ($this->isClosed())
         {
             $this->connect();
         }
@@ -265,7 +267,7 @@ class MysqliConnection extends AbstractTransactionalConnection
                 $orderby = $order;
             }
         }
-        
+
         $where = array();
         foreach ($criteria as $k => $v)
         {
@@ -278,13 +280,13 @@ class MysqliConnection extends AbstractTransactionalConnection
                 $where[] = $this->escapeField($k) . ' = ' . $this->convertToDb($v, $type);
             }
         }
-        
+
         $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
-        
+
         $query = 'SELECT * FROM ' . $tableName
                 . (empty($where) ? '' : ' WHERE ' . implode(' AND ', $where) )
                 . (is_null($orderby) || empty($orderby) ? '' : ' ORDER BY ' . $orderby )
-                . (is_null($limit) ? '' : ' LIMIT ' . $limit . ( !$offset ? '' : ', ' . $offset));
+                . (is_null($limit) ? '' : ' LIMIT ' . $limit . (!$offset ? '' : ', ' . $offset));
 
         if ($forUpdate)
         {
@@ -301,7 +303,7 @@ class MysqliConnection extends AbstractTransactionalConnection
         {
             $resource = $this->rLastQuery;
         }
-        if( is_resource($resource) )
+        if (is_resource($resource))
         {
             \mysqli_free_result($resource);
             return true;
@@ -313,7 +315,7 @@ class MysqliConnection extends AbstractTransactionalConnection
     {
         return $this->mysqli;
     }
-    
+
     public function lastid()
     {
         return $this->mysqli->insert_id;
@@ -321,27 +323,26 @@ class MysqliConnection extends AbstractTransactionalConnection
 
     protected function refreshObjectQuery(\Quartz\Object\Table $table, $object)
     {
-        $lastId = $this->lastid();        
+        $lastId = $this->lastid();
         $pks = array();
-        foreach( $table->getColumns() as $name => $property)
+        foreach ($table->getColumns() as $name => $property)
         {
-            if( $property['primary'])
+            if ($property['primary'])
             {
-                if( $property['type'] == 'sequence' )
+                if ($property['type'] == 'sequence')
                 {
                     $pks[] = sprintf("%s = %d", $name, $lastId);
-                }
-                else
+                } else
                 {
                     $pks[] = sprintf("%s = %s", $name, $object[$name]);
                 }
             }
         }
-        
+
         $res = $this->query('SELECT * FROM ' . $table->getName() . ' WHERE ' . implode(' AND ', $pks));
         return new \Quartz\Object\Collection($this, $res);
     }
-    
+
     public function insert($table, $object, $returning = '*')
     {
         $tableName = ($table instanceof \Quartz\Object\Table) ? $table->getName() : $table;
@@ -359,13 +360,14 @@ class MysqliConnection extends AbstractTransactionalConnection
 
     protected function doQuery(\mysqli $connection, $query, $maxRetry = 10)
     {
-        while($maxRetry > 0)
+        while ($maxRetry > 0)
         {
             try
             {
                 return \mysqli_query($connection, $query);
-            } catch (\Exception $ex) {
-                if( !strstr($e->getMessage(), 'MySQL server has gone away') )
+            } catch (\Exception $ex)
+            {
+                if (!strstr($e->getMessage(), 'MySQL server has gone away'))
                 {
                     throw $ex;
                 }
@@ -374,22 +376,21 @@ class MysqliConnection extends AbstractTransactionalConnection
         }
     }
 
-
     public function query($query, $parameters = array())
     {
         if (is_null($query))
         {
             return null;
         }
-        
+
         if ($this->isClosed())
         {
             $this->connect();
         }
-        
+
         $this->sLastQuery = $query;
         $this->rLastQuery = $this->doQuery($this->mysqli, $query);
-        if( $this->errorCode() )
+        if ($this->errorCode())
         {
             throw new \Quartz\Exception\SqlQueryException($query, $this->error(), $this);
         }
@@ -421,9 +422,9 @@ class MysqliConnection extends AbstractTransactionalConnection
         $query .= implode(', ', array_map($callback, array_keys($object), $object));
         $query .= " WHERE " . implode(' AND ', $where);
         $query .= ";";
-        
+
         $this->query($query);
-        
+
         $res = $this->query('SELECT * FROM ' . $tableName . ' WHERE ' . implode(' AND ', $where));
         return new \Quartz\Object\Collection($this, $res);
     }
