@@ -59,6 +59,8 @@ class PgsqlConnection extends AbstractTransactionalConnection
         $this->registerConverter('HStore', new \Quartz\Converter\PgSQL\HStoreConverter(), array('hstore'));
         $this->registerConverter('Interval', new \Quartz\Converter\PgSQL\IntervalConverter(), array('interval'));
         $this->registerConverter('Binary', new \Quartz\Converter\PgSQL\ByteaConverter(), array('binary', 'bytea'));
+        
+        parent::configure();
     }
 
     public function connect()

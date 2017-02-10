@@ -93,6 +93,8 @@ class MysqliConnection extends AbstractTransactionalConnection
         $this->registerConverter('String', new \Quartz\Converter\MySQL\StringConverter(), array('varchar', 'char', 'text', 'uuid', 'tsvector', 'xml', 'bpchar', 'string', 'enum'));
         $this->registerConverter('Timestamp', new \Quartz\Converter\MySQL\TimestampConverter(), array('timestamp', 'date', 'time', 'datetime', 'unixtime'));
         $this->registerConverter('HStore', new \Quartz\Converter\MySQL\HStoreConverter(), array('hstore'));
+        
+        parent::configure();
     }
 
     public function convertType($type)

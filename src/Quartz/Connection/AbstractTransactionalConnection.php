@@ -32,7 +32,39 @@ abstract class AbstractTransactionalConnection implements Connection
         $this->configure();
     }
 
-    public abstract function configure();
+    public function configure()
+    {
+        if (isset($this->extra['converters']))
+        {
+            foreach ($this->extra['converters'] as $name => $config)
+            {
+                $fn = array_key_exists('factory', $config) ? $config['factory'] : false;
+                if (!array_key_exists('types', $config) || !is_array($config['types']) || !$config['types'])
+                {
+                    throw new \InvalidArgumentException('You must set at least one type');
+                }
+
+                if ($fn)
+                {
+                    if (is_callable($fn))
+                    {
+                        $converter = $fn($this);
+                    } else
+                    {
+                        throw new \InvalidArgumentException('Factory must be callable');
+                    }
+                } elseif (!array_key_exists('converter', $config) || !($config['converter'] instanceof \Quartz\Converter\Converter ))
+                {
+                    throw new \InvalidArgumentException('You must set a valid quartz converter');
+                } else
+                {
+                    $converter = $config['converter'];
+                }
+
+                $this->registerConverter($name, $converter, $config['types']);
+            }
+        }
+    }
 
     public function begin()
     {
