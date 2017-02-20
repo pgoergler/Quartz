@@ -269,9 +269,6 @@ abstract class AbstractTransactionalConnection implements Connection
     public function convertFromDb($value, $type)
     {
         list($typeClean, $typeParameter, $arraySize) = $this->convertType($type);
-        $logger = \Logging\LoggersManager::getInstance()->get();
-
-        $logger->debug("clean:{}, param:{}, array:{}", [$typeClean, $typeParameter, $arraySize]);
         if ($arraySize !== false)
         {
             $elementConverter = $this->getConverterForType($typeClean);
