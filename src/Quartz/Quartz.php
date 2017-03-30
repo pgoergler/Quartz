@@ -64,7 +64,30 @@ class Quartz
     {
         static::$_instance = $quartz;
     }
+    
+    public function configureDatabase($name)
+    {
+        if (!isset($this->configs[$name]) || !is_array($this->configs[$name]))
+        {
+            throw new \InvalidArgumentException('No configuration found for database [' . $name . ']');
+        }
+        
+        if (!isset($this->configs[$name]['__configured']) || $this->configs[$name]['__configured'] !== true)
+        {
+            $config = $this->process($this->configs[$name]);
+            $this->configs[$name] = array_merge($this->configs[$name], $config);
+            $this->configs[$name]['__configured'] = true;
 
+            $driver = $this->configs[$name]['driver'];
+
+            $conn = new $driver($this->configs[$name]['host'], $this->configs[$name]['user'], $this->configs[$name]['password'], $this->configs[$name]['database'], $this->configs[$name]['extra']);
+            $conn->connect();
+            $this->connections[$name] = $conn;
+        }
+        
+        return $this->configs[$name];
+    }
+    
     /**
      *
      * @param String $name
@@ -72,30 +95,17 @@ class Quartz
      */
     public function &getConnection($name)
     {
+        $this->configureDatabase($name);
         if (isset($this->connections[$name]))
         {
             return $this->connections[$name];
         } else
         {
-            if (isset($this->configs[$name]) && is_array($this->configs[$name]))
-            {
-                $config = $this->process($this->configs[$name]);
-                $this->configs[$name] = array_merge($this->configs[$name], $config);
-
-                $driver = $this->configs[$name]['driver'];
-
-                $conn = new $driver($this->configs[$name]['host'], $this->configs[$name]['user'], $this->configs[$name]['password'], $this->configs[$name]['database'], $this->configs[$name]['extra']);
-                $conn->connect();
-                $this->connections[$name] = $conn;
-                return $this->connections[$name];
-            } else
-            {
-                throw new \InvalidArgumentException('No configuration found for database [' . $name . ']');
-            }
+            throw new \InvalidArgumentException('No configuration found for database [' . $name . ']');
         }
     }
 
-    public function setConnection($name, Connection\Connection &$connetion)
+    public function setConnection($name, Connection\Connection &$connection)
     {
         $this->connections[$name] = $connection;
     }
@@ -106,6 +116,7 @@ class Quartz
         {
             $conn->close($force);
         }
+        $this->connections = array();
     }
 
     public function getTableClassNameFromEntityClassName($className)
@@ -166,10 +177,7 @@ class Quartz
 
     public function getDatabaseName($name)
     {
-        if (!isset($this->configs[$name]) || !is_array($this->configs[$name]))
-        {
-            throw new \InvalidArgumentException('No configuration found for database [' . $name . ']');
-        }
+        $this->configureDatabase($name);
         return $this->configs[$name]['database'];
     }
 
