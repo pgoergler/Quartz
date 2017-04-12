@@ -184,6 +184,7 @@ class Collection implements \Iterator, \Countable
         }
 
         $this->filters[] = $callable;
+        return $this;
     }
 
     /**
