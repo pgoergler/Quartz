@@ -150,7 +150,7 @@ class Collection implements \Iterator, \Countable
 
         foreach ($this->filters as $index => $filter)
         {
-            $values = call_user_func($filter, $values);
+            $values = call_user_func($filter, $values, $index);
         }
 
         return $values;
@@ -177,6 +177,18 @@ class Collection implements \Iterator, \Countable
      * @param Callable $callable the filter.
      */
     public function registerFilter($callable)
+    {
+        return $this->map($callable);
+    }
+    
+    /**
+     * map
+     *
+     * Add a new callable to process each rows.
+     * Callable are chainable too.
+     * @param Callable $callable
+     */
+    public function map($callable)
     {
         if (!is_callable($callable))
         {
