@@ -324,6 +324,14 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
         }
         return $this;
     }
+    
+    protected function unlinkRelation($relation, \Quartz\Connection\Connection $connection, Table $table, $foreignKey, $localValue) {
+        $query = array(
+            $foreignKey => $localValue
+        );
+
+        $connection->delete($table, $query);
+    }
 
     /**
      * Add objects to a oneToMany relation in order to update them during
@@ -423,7 +431,6 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
                     strtolower(preg_replace('/(.)([A-Z])/', '$1_$2', $property)),
                     preg_replace('/(.)([A-Z])/', '$1_$2', $property),
                 );
-
                 foreach ($check as $property)
                 {
                     if ($this->getTable()->hasOneRelation($property))
@@ -662,11 +669,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $foreign = $config['foreign'];
             $class = $config['class'];
 
-            $query = array(
-                $foreign => $this->get($local),
-            );
             $table = $this->getOrm()->getTable($class);
-            $conn->delete($table, $query);
+            $this->unlinkRelation($relation, $conn, $table, $foreign, $this->get($local));
             foreach ($objects as $object)
             {
                 $this->setForeignKey($relation, $object);
