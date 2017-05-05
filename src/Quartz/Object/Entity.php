@@ -670,7 +670,8 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $class = $config['class'];
 
             $table = $this->getOrm()->getTable($class);
-            $this->unlinkRelation($relation, $conn, $table, $foreign, $this->get($local));
+            $localValue = $this->getTable()->convertPropertyValueToDb($local, $this->get($local));
+            $this->unlinkRelation($relation, $conn, $table, $foreign, $localValue);
             foreach ($objects as $object)
             {
                 $this->setForeignKey($relation, $object);
