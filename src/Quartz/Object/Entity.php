@@ -325,7 +325,17 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
         return $this;
     }
     
-    protected function unlinkRelation($relation, \Quartz\Connection\Connection $connection, Table $table, $foreignKey, $localValue) {
+    protected function linkRelation($relation, \Quartz\Connection\Connection $connection, Table $table, $foreignKey, $localValue, $objects)
+    {
+        foreach ($objects as $object)
+        {
+            $this->setForeignKey($relation, $object);
+            $object->save();
+        }
+    }
+    
+    protected function unlinkRelation($relation, \Quartz\Connection\Connection $connection, Table $table, $foreignKey, $localValue)
+    {
         $query = array(
             $foreignKey => $localValue
         );
@@ -672,11 +682,7 @@ abstract class Entity implements \ArrayAccess, \IteratorAggregate
             $table = $this->getOrm()->getTable($class);
             $localValue = $this->getTable()->convertPropertyValueToDb($local, $this->get($local));
             $this->unlinkRelation($relation, $conn, $table, $foreign, $localValue);
-            foreach ($objects as $object)
-            {
-                $this->setForeignKey($relation, $object);
-                $object->save();
-            }
+            $this->linkRelation($relation, $conn, $table, $foreign, $localValue, $objects);
         }
 
         $this->objectsPostSave = array();
