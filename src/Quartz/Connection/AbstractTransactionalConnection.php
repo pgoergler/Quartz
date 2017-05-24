@@ -132,6 +132,28 @@ abstract class AbstractTransactionalConnection implements Connection
                 return $this->escapeString($value);
         }
     }
+    
+    public function convertColumnFromDb($value, $type = 'string')
+    {
+        list($typeClean, $typeParameter, $array) = $this->convertType($type);
+        if( $array !== false)
+        {
+            $elementConverter = $this->getConverterForType($typeClean);
+            $convertFn = function($value) use (&$elementConverter, $type, $typeParameter) {
+                return $elementConverter->fromDb($value, $type, $typeParameter);
+            };
+            $converter = $this->getConverterFor('Array');
+            return $converter->fromDb($value, $type, array(
+                'size' => $array,
+                'converter' => $convertFn
+            ));
+        }
+        else
+        {
+            $converter = $this->getConverterForType($typeClean);
+            return $converter->fromDb($value, $type, $typeParameter);
+        }
+    }
 
     public function getConverterFor($name)
     {

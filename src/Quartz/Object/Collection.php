@@ -292,7 +292,7 @@ class Collection implements \Iterator, \Countable
         return $this;
     }
 
-    public function removecColumn($key)
+    public function removeColumn($key)
     {
         if (array_key_exists($key, $this->schema))
         {
