@@ -22,7 +22,8 @@ class HStoreConverter implements \Quartz\Converter\ConverterInterface
             return array();
         }
 
-        @eval(sprintf("\$hstore = array(%s);", $data));
+        $data = str_replace('$', "\\$", $data);
+        eval(sprintf("\$hstore = array(%s);", $data));
         if (!(isset($hstore) and is_array($hstore)))
         {
             return null;
